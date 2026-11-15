@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+strumenti/dati/gaia_b64.txt
+strumenti/gaia_campi*.json
+alb8k.jpg
+dem16.tif
