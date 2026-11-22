@@ -8,6 +8,8 @@ Mappa del cielo interattiva per il sito dell'Associazione Astrofili Piombino (AA
 
 Si apre direttamente nel browser, senza scaricare niente, anche da telefono. È pubblicata con GitHub Pages dal ramo `main`: ogni modifica caricata qui è online dopo circa un minuto.
 
+Con [`…/cielo-punta-falcone/#timeline`](https://jacklions05.github.io/cielo-punta-falcone/#timeline) si apre invece la **timeline**: tutti gli articoli dell'archivio in ordine di pubblicazione, con filtri, scheda di ogni foto e il ritaglio di cielo dove si trova l'oggetto.
+
 Per aprire la mappa già centrata su un oggetto, aggiungi in fondo `#` e il nome senza spazi, per esempio [`…/cielo-punta-falcone/#M42`](https://jacklions05.github.io/cielo-punta-falcone/#M42).
 
 ## Inserirla nel sito dell'associazione

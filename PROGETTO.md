@@ -6,7 +6,7 @@ Questo file serve a chi riprende il lavoro: una nuova chat con Claude, Codex o u
 
 Una mappa del cielo interattiva per il sito dell'Associazione Astrofili Piombino (AAP). Mostra il cielo visto dall'osservatorio di Punta Falcone a Piombino con gli oggetti fotografati dai soci. Comprende anche una vista dalla cupola con il telescopio Meade 14″ e una simulazione di cosa si vede all'oculare.
 
-Testi e interfaccia sono in italiano. Il link pubblico attuale è un artifact di claude.ai: https://claude.ai/artifact/MMd9qbHARmLsCLhtj56A4Z
+Testi e interfaccia sono in italiano. Il link pubblico è https://jacklions05.github.io/cielo-punta-falcone/ (GitHub Pages dal ramo `main`). Esiste anche l'artifact di claude.ai https://claude.ai/artifact/MMd9qbHARmLsCLhtj56A4Z: **ogni modifica va pubblicata in tutti e due i posti, e i file devono restare identici** (stesso sha256). Prima di pubblicare controlla che l'artifact non sia stato cambiato da un'altra chat: se è cambiato, parti dalla sua versione.
 
 ## Com'è organizzato il codice
 
@@ -27,12 +27,13 @@ Fuori dal file ci sono solo le due mappe della Luna HD, caricate a richiesta con
 | **Oculare** | `apriOculare`, `disegnaOculare`, `oggettoOcu`, `OCU_SPECIALI`, `galassiaFisica`, `seeingAvvia`, `stella`, `coloreStella` | Vedi la sezione sotto |
 | **Luna all'oculare** | `caricaLuna`, `lunaPixel`, `LUNA_MAPPE` | Illuminazione con il Sole vero, rilievo dal modello del terreno |
 | **Didattica** | `sctApri`, `sctTesto`, `sctDisegna` | Tasto "Come funziona il Meade" nella cupola, con due livelli: semplice e approfondito |
+| **Timeline** | `TL`, `tlVoci`, `tlMostra`, `tlVoce`, `tlDisegna`, `tlRipresa`, `tlCostVicina`, `TL_CONF` | Pulsante «Timeline» o indirizzo `#timeline`. Un articolo di `PAGINE` per voce, dal più recente; filtri per testo, anno, tipo, costellazione, strumento, sito. La miniatura e il ritaglio di cielo portano all'oggetto sulla mappa (`vaiA`). Data di ripresa letta dal titolo o dall'indirizzo quando c'è. Per Luna, Sole e pianeti la costellazione si calcola alla data con i confini IAU (`TL_CONF`, da d3-celestial) |
 
 ### L'oculare: le scelte importanti
 
 - **Telescopio:** Meade 14″ ACF, D = 356 mm, F = 2845 mm (f/8), costante `FOC_MEADE`.
 - **Oculari veri della cupola** (`OCULARI`, focale in mm e campo apparente in gradi): 40 mm Plössl 45°, 34 mm 64°, 26 mm Plössl 45°, 20 mm 64°, 14 mm 82°. In più 8, 5 e 3,5 mm a 82°, immaginari, solo per la Luna: `OCU_LUNA` è l'indice del primo. **Il cerchio disegnato è proporzionale al campo apparente** (`AFOV_MAX = 82`), così confrontare oculari diversi è corretto.
-- **Cielo:** SQM 20,15 (Bortle circa 5), da lightpollutionmap. Il fondo è grigio, non nero (`cieloOcu`).
+- **Cielo:** SQM 20,15 (Bortle circa 5), da lightpollutionmap. Due fondi, scelti col tasto «Fondo grigio» (`OCU.scuro`, ricordato in localStorage): grigio come uno schizzo, oppure scuro come all'oculare, con luminosità che va come il quadrato della pupilla d'uscita.
 - **Stelle:**
   - entro 0,5° da ogni oggetto sono **vere**, da Gaia DR3: `GAIA_B64` compresso, `GAIA_CAMPI` contiene i centri dei campi coperti;
   - più lontano sono inventate ma sempre uguali nello stesso punto (generatore `rngDa` per cella);
@@ -40,7 +41,7 @@ Fuori dal file ci sono solo le due mappe della Luna HD, caricate a richiesta con
 - **Doppie** (`DOPPIE`, `DOPPIE_POS`): compagne dai dati WDS, primarie in posizione esatta Hipparcos. `skipDoppie` evita di disegnarle due volte.
 - **Galassie generiche:** `galassiaFisica` usa un modello fisico (disco esponenziale più bulge) con la magnitudine e il tipo di Hubble da OpenNGC, e la soglia di contrasto dell'occhio.
 - **Oggetti speciali** disegnati a mano in `OCU_SPECIALI`: M13, M57, M27, M82, M81, M1, M104, M31, M51, M42, M17, M8. Più il Velo (N6960, N6992) nel ramo generico.
-- **Seeing:** deformazione a strisce in x e y, più forte vicino all'orizzonte e agli alti ingrandimenti. Si può spegnere.
+- **Seeing:** in WebGL (`SEE`, `seeingGL`): campo di spostamento continuo a più scale che scorre col vento (frozen flow), ballo d'insieme, sfocatura grande quanto il disco di seeing (FWHM 1,5–3″, × massa d'aria^0,6) e brevi istanti di calma. Senza WebGL resta il vecchio metodo a strisce (`seeingStrisce`). Si può spegnere.
 - **Cupola chiusa o puntata fuori dalla fenditura:** l'oculare si oscura (`fenditura(v)`). Vale solo se l'oculare è aperto dal telescopio (`OCU.daTel`). Dal pannello di un oggetto è solo un'anteprima.
 - **Taratura:** alcuni oggetti sono stati confrontati con schizzi di asod.info fatti con aperture e cieli simili: M51 e M33 (Ikebe), M82, M42, M57, M27, M17, M8 (Ikebe), Velo (Ikebe). Gli schizzi non sono stati copiati.
 
@@ -67,7 +68,8 @@ Gli script usano Python 3 con numpy, Pillow, reportlab, playwright e healpy (sol
 
 ## Cose aperte / idee
 
-- La Luna HD è stata provata in locale ma non verificata sul sito pubblicato: controllare che i due JPG si carichino.
+- Mappa della Luna più fine (Kaguya 64 pixel/grado): valutata e scartata. Con gli oculari veri la mappa attuale è già più fine dello schermo; il guadagno ci sarebbe solo col 5 e 3,5 mm a seeing spento.
+- Timeline: la data di ripresa c'è solo per circa un terzo degli articoli, quelli che la scrivono nel titolo o nell'indirizzo.
 - Il ramo ovest del Velo (NGC 6960) è al limite della visibilità: da verificare con chi lo osserva dalla cupola.
 - M101, M31 e altri oggetti grandi e deboli non hanno uno schizzo di riferimento con un cielo simile al nostro.
 - Il valore esatto del rapporto f del primario e dell'ingrandimento del secondario del Meade 14″ f/8 non è confermato: nella didattica ci sono solo stime.
