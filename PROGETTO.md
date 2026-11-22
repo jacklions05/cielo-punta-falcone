@@ -28,6 +28,8 @@ Fuori dal file ci sono solo le due mappe della Luna HD, caricate a richiesta con
 | **Luna all'oculare** | `caricaLuna`, `lunaPixel`, `LUNA_MAPPE` | Illuminazione con il Sole vero, rilievo dal modello del terreno |
 | **Didattica** | `sctApri`, `sctTesto`, `sctDisegna` | Tasto "Come funziona il Meade" nella cupola, con due livelli: semplice e approfondito |
 | **Timeline** | `TL`, `tlVoci`, `tlMostra`, `tlVoce`, `tlDisegna`, `tlRipresa`, `tlCostVicina`, `TL_CONF` | Pulsante «Timeline» o indirizzo `#timeline`. Un articolo di `PAGINE` per voce, dal più recente; filtri per testo, anno, tipo, costellazione, strumento, sito. La miniatura e il ritaglio di cielo portano all'oggetto sulla mappa (`vaiA`). Data di ripresa letta dal titolo o dall'indirizzo quando c'è. Per Luna, Sole e pianeti la costellazione si calcola alla data con i confini IAU (`TL_CONF`, da d3-celestial) |
+| **Confronta** | `CF`, `cfApri`, `cfLato`, `cfSrc` | Tasto «Confronta le foto» nel pannello di un oggetto: due foto in grande affiancate (sul telefono una sopra l'altra), di default la più vecchia e la più recente. Carica l'originale dal sito AAP, poi la versione 720×480, poi la miniatura. Dentro claude.ai le immagini esterne sono bloccate e resta la miniatura |
+| **Statistiche soci** | `statSoci` | In cima alla lista soci: articoli, Messier fotografati (contati dalle sigle degli oggetti, comprese le sigle secondarie), articoli per anno, strumenti più usati |
 
 ### L'oculare: le scelte importanti
 
@@ -73,4 +75,5 @@ Gli script usano Python 3 con numpy, Pillow, reportlab, playwright e healpy (sol
 - Il ramo ovest del Velo (NGC 6960) è al limite della visibilità: da verificare con chi lo osserva dalla cupola.
 - M101, M31 e altri oggetti grandi e deboli non hanno uno schizzo di riferimento con un cielo simile al nostro.
 - Il valore esatto del rapporto f del primario e dell'ingrandimento del secondario del Meade 14″ f/8 non è confermato: nella didattica ci sono solo stime.
+- Nuove foto: si aggiungono a mano quando Jack lo chiede (riga in `PAGINE`, miniatura in `TH`/`IMG`). Aggiornamento automatico, filtro per autore e dati tecnici delle riprese: valutati e scartati.
 - Si potrebbe spezzare `index.html` in più file (codice, dati, stile), così le modifiche toccano solo poche righe.

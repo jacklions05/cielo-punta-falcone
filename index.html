@@ -229,6 +229,28 @@ button.mini{font-size:.72rem;padding:.3rem .6rem}
   #tl #tlFiltriB{display:inline-block}
   #tl .tlFiltri:not(.aperti) select,#tl .tlFiltri:not(.aperti) #tlAzzera{display:none}
 }
+/* ===== Confronta: le foto di un oggetto in grande, affiancate ===== */
+#cf{position:fixed;inset:0;z-index:72;background:rgba(6,6,5,.97);display:flex;flex-direction:column}
+#cf .cfTesta{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 8px}
+#cf h2{margin:0;font:600 1.15rem var(--f-display)}
+#cf .cfCorpo{flex:1;min-height:0;display:grid;grid-template-columns:repeat(var(--cf-n,2),minmax(0,1fr));gap:10px;padding:0 12px 12px}
+#cf .cfLato{display:flex;flex-direction:column;min-height:0;min-width:0}
+#cf .cfLato select{font:500 .8rem var(--f-ui);color:var(--ink);background:#151413;border:1px solid var(--rule);border-radius:10px;padding:.4rem .5rem;margin-bottom:6px;max-width:100%}
+#cf .cfImg{flex:1;min-height:0;background:#000;border-radius:8px;border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+#cf .cfImg img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+#cf .cfImg .cfAtt{position:absolute;color:var(--muted);font-size:.8rem}
+#cf .cfInfo{font-size:.76rem;color:var(--muted);margin-top:6px;line-height:1.4}
+#cf .cfInfo a{color:var(--ink)}
+#cf .cfNota{font-size:.7rem;color:#c9a46a;margin-top:3px}
+@media (max-width:760px){#cf .cfCorpo{grid-template-columns:1fr;grid-template-rows:repeat(var(--cf-n,2),minmax(0,1fr))}}
+#panel .pConfronta{width:100%;margin:2px 0 4px}
+/* statistiche nella sezione soci */
+#listUl li.stat{font-size:.72rem;color:#ccc;border:1px dashed #555;border-radius:12px;padding:.5rem .6rem;margin-bottom:6px}
+#listUl li.stat b{color:var(--ink);font-weight:600}
+#listUl li.stat .st{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 6px;align-items:center;margin:4px 0 6px}
+#listUl li.stat .bar{height:7px;border-radius:4px;background:var(--accent);opacity:.75}
+#listUl li.stat .tot{height:8px;border-radius:4px;background:#2a2927;overflow:hidden;margin:3px 0 6px}
+#listUl li.stat .tot i{display:block;height:100%;background:var(--accent)}
 </style>
 
 <div id="app">
@@ -326,6 +348,10 @@ button.mini{font-size:.72rem;padding:.3rem .6rem}
   <div class="tlCorpo" id="tlCorpo"></div>
 </div>
 
+<div id="cf" hidden role="dialog" aria-label="Confronta le foto">
+  <div class="cfTesta"><h2 id="cfTit"></h2><button id="cfChiudi" aria-label="Chiudi il confronto">✕ Chiudi</button></div>
+  <div class="cfCorpo" id="cfCorpo"></div>
+</div>
 <script>
 /* ======================================================================
    ARCHIVIO ASTROIMMAGINI — web.astropiombino.org/category/astroimmagini/
@@ -2268,6 +2294,7 @@ function select(id,keep){
     <div class="kind">${o.tipo}</div><h2>${o.nome}</h2>${o.alias?`<div class="hint">${o.alias}</div>`:''}${o.kind!=='evento'&&o.kind!=='paesaggio'&&o.kind!=='sole'&&o.kind!=='cometa'?`<button class="wiki ocuB" data-ocu="${o.id}">Come appare all'oculare</button> `:''}${wikiUrl(o)?`<a class="wiki" href="${wikiUrl(o)}" target="_blank" rel="noopener">Wikipedia ↗</a>`:''}${o._sigle&&o._sigle.length?`<div class="sigle" aria-label="Nei cataloghi">${o._sigle.map(g=>`<button data-cat="${catDi(g)}" title="Catalogo ${CATALOGHI[catDi(g)].nome}">${g}</button>`).join('')}</div>`:''}
     <dl class="facts" id="pFacts"></dl>
     ${o.kind==='evento'?'':`<div class="ctrls">${o.kind!=='paesaggio'?'<button id="pTransit">Porta il cielo al transito</button>':''}<button id="pCenter">${o.kind==='paesaggio'?"Guarda verso l'Elba":'Centra'}</button></div>`}
+    ${o.foto.length?`<button class="pConfronta" id="pConfronta">${o.foto.length>1?'Confronta le foto ('+o.foto.length+')':'Foto in grande'}</button>`:''}
     <h3>Su Astroimmagini · ${fotos.length} ${fotos.length===1?'articolo':'articoli'}</h3>${fotos.some(f=>f.fonte==='storico')&&fotos.some(f=>f.fonte!=='storico')?'<p class="legenda"><span class="src-nuovo">■ sito attuale</span> <span class="src-storico">■ sito storico</span></p>':''}
     ${fotos.length?'':`<p class="hint">${o.foto.length?'Nessun articolo pubblicato entro questa data.':'Nessun articolo ancora nell\'archivio.'}</p>`}
     <div class="photos">${fotos.map(cardFoto).join('')}</div>${altri(o)}`;
@@ -2365,7 +2392,7 @@ function fillList(){
   const oggi=isoDay(); const ul=$('listUl'); let q=norma($('cerca').value);
   if(PAROLA_SOCI(q)){if(!state.dafare){state.dafare=true;redraw()}q=''}
   $('bNotte').setAttribute('aria-pressed',!!state.notte);
-  const testa=state.dafare?`<li class="soci"><span>Da fotografare · ${DAFARE.filter(d=>d[7]==='messier').length} Messier e ${DAFARE.filter(d=>d[7]==='facile').length} oggetti facili da Punta Falcone e ${DAFARE.filter(d=>d[7]==='rasc').length} della lista RASC Finest NGC</span><button id="bEsciSoci" class="mini">Esci</button></li>`:'';
+  const testa=state.dafare?`<li class="soci"><span>Da fotografare · ${DAFARE.filter(d=>d[7]==='messier').length} Messier e ${DAFARE.filter(d=>d[7]==='facile').length} oggetti facili da Punta Falcone e ${DAFARE.filter(d=>d[7]==='rasc').length} della lista RASC Finest NGC</span><button id="bEsciSoci" class="mini">Esci</button></li>`+statSoci():'';
   if(state.notte||state.dafare){const cat=$('catalogo').value;let rows;
     if(state.notte){const N=stanotte();rows=N.res.filter(([o])=>(!q||o._cerca.includes(q))&&(!cat||o._sigle.some(g=>catDi(g)===cat))).map(([o,t,a])=>[o,oraDi(t)+' · '+a.toFixed(0)+'°',t]);
       rows.unshift(N.ini?['hint',`${Math.abs(tNow()-Date.now())<14*3600e3?'Stanotte':'Quella sera'}: dalle ${oraDi(N.ini)} all'una, alti più di 25°. A destra l'ora in cui stanno più alti.`]:['hint','A quest\'ora del giorno non fa buio prima dell\'una.'])}
@@ -3068,4 +3095,38 @@ $('tlAzzera').onclick=()=>{['tlAnno','tlTipo','tlCost','tlStr','tlSito'].forEach
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&TL.aperta){e.stopPropagation();tlApri(false)}},true);
 addEventListener('resize',()=>{if(TL.aperta)document.documentElement.style.setProperty('--tl-testa',$('tl').querySelector('.tlTesta').offsetHeight-2+'px')});
 if(location.hash==='#timeline')tlApri(true);
+/* ===== CONFRONTA: le foto di un oggetto in grande, due alla volta, senza uscire dalla mappa =====
+   Le foto grandi vengono dal sito AAP: su GitHub Pages si vedono, dentro claude.ai no (le immagini esterne sono bloccate)
+   e resta la miniatura. */
+const CF={o:null};
+function cfFoto(o){return o.foto.slice().sort((a,b)=>a.data.localeCompare(b.data))}
+function cfSrc(f,id){const v=IMGO[f.url+'#'+id]||IMG[f.url];if(!v)return [];const m=IMGB[v[0]]+v.slice(2);return [m.replace(/-\d+x\d+(\.\w+)$/,'$1'),m]} /* prima l'originale, poi la versione 720×480 */
+function cfLato(i,sel){const F=cfFoto(CF.o),f=F[sel],src=cfSrc(f,CF.o.id),pic=(TH[(IMGO[f.url+'#'+CF.o.id]||IMG[f.url])]||'');
+  const L=$('cfCorpo').children[i];
+  L.innerHTML=`<select aria-label="Foto ${i+1}">${F.map((x,k)=>`<option value="${k}"${k===sel?' selected':''}>${x.data.slice(0,4)} · ${x.titolo}</option>`).join('')}</select>
+   <div class="cfImg"><span class="cfAtt">carico la foto…</span></div>
+   <div class="cfInfo">${f.fonte==='storico'&&!f.url.includes('win.astropiombino')?'Immagine del':'Pubblicata il'} ${new Date(f.data+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}${f.str.length?' · '+f.str.map(k=>(typeof TL_NOMESTR!=='undefined'&&TL_NOMESTR[k])||k).join(' · '):''} · <a href="${f.url}" target="_blank" rel="noopener">Apri l'articolo ↗</a></div>`;
+  L.querySelector('select').onchange=e=>cfLato(i,+e.target.value);
+  const box=L.querySelector('.cfImg'),img=new Image();img.alt=f.titolo;let k=0;
+  const prova=()=>{if(k<src.length){img.src=src[k++]}else if(pic){img.onerror=null;img.src=pic;img.style.width='min(100%,480px)';box.insertAdjacentHTML('afterend','<div class="cfNota">Qui si vede solo la miniatura: la foto grande si apre sul sito pubblico della mappa o nell\'articolo.</div>')}else box.querySelector('.cfAtt').textContent='Foto non disponibile'};
+  img.onload=()=>{const a=box.querySelector('.cfAtt');if(a)a.remove();if(!img.isConnected)box.appendChild(img)};img.onerror=prova;prova()}
+function cfApri(id){const o=OGGETTI.find(x=>x.id===id);if(!o||!o.foto.length)return;CF.o=o;const F=cfFoto(o),n=Math.min(2,F.length);
+  $('cfTit').textContent=o.nome+(F.length>1?` · ${F.length} foto dal ${F[0].data.slice(0,4)} al ${F[F.length-1].data.slice(0,4)}`:'');
+  $('cfCorpo').style.setProperty('--cf-n',n);$('cfCorpo').innerHTML='<div class="cfLato"></div>'.repeat(n);
+  cfLato(0,0);if(n>1)cfLato(1,F.length-1);$('cf').hidden=false;$('cfChiudi').focus()}
+$('cfChiudi').onclick=()=>{$('cf').hidden=true};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('cf').hidden){e.stopPropagation();$('cf').hidden=true}},true);
+$('panel').addEventListener('click',e=>{if(e.target.closest('#pConfronta'))cfApri(state.sel)});
+
+/* ===== STATISTICHE: nella sezione soci (si apre scrivendo «soci» nella ricerca) ===== */
+function statSoci(){const P=PAGINE.filter(p=>p[3].some(id=>OGGETTI.some(o=>o.id===id))),anni={};P.forEach(p=>{const y=p[0].slice(0,4);anni[y]=(anni[y]||0)+1});
+  const Y=Object.keys(anni).sort(),mx=Math.max(...Object.values(anni));
+  const MS=new Set();OGGETTI.filter(o=>!o.dafare&&o.foto.length).forEach(o=>(o._sigle||sigleDi(o)).forEach(g=>{if(catDi(g)==='M')MS.add(g.replace(/\D/g,''))}));const mess=MS.size,ngc=OGGETTI.filter(o=>o.kind==='dso').length;
+  const S={};P.forEach(p=>(STRUM[p[2]]||[]).forEach(k=>S[k]=(S[k]||0)+1));const nome=Object.fromEntries(STRUMENTI.flatMap(g=>g[1]));
+  const top=Object.entries(S).sort((a,b)=>b[1]-a[1]).slice(0,6),ms=top.length?top[0][1]:1;
+  const righe=(R,m)=>R.map(([k,n])=>`<span>${k}</span><span class="bar" style="width:${Math.max(3,n/m*100)}%"></span><span>${n}</span>`).join('');
+  return `<li class="stat"><b>Archivio in numeri</b> · ${P.length} articoli · ${OGGETTI.filter(o=>o.foto.length).length} soggetti · ${ngc} oggetti del profondo cielo
+   <div style="margin-top:6px">Messier fotografati: <b>${mess} su 110</b></div><div class="tot"><i style="width:${mess/110*100}%"></i></div>
+   <b>Articoli per anno</b><div class="st">${righe(Y.map(y=>[y,anni[y]]),mx)}</div>
+   <b>Strumenti più usati</b><div class="st">${righe(top.map(([k,n])=>[nome[k]||k,n]),ms)}</div></li>`}
 </script>
