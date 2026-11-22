@@ -251,6 +251,13 @@ button.mini{font-size:.72rem;padding:.3rem .6rem}
 #listUl li.stat .bar{height:7px;border-radius:4px;background:var(--accent);opacity:.75}
 #listUl li.stat .tot{height:8px;border-radius:4px;background:#2a2927;overflow:hidden;margin:3px 0 6px}
 #listUl li.stat .tot i{display:block;height:100%;background:var(--accent)}
+
+/* niente selezione accidentale: toccando con dito o penna non si colora di azzurro la pagina.
+   Restano selezionabili i campi e i testi informativi (si seleziona tenendo premuto lì sopra) */
+html{-webkit-tap-highlight-color:transparent}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,select,#panel h2,#panel .hint,#panel dl,#panel .photo .t,#tl dl,#tl .tlTit,#cf .cfInfo,#ocuInfo,#sctTesto,#toast{-webkit-user-select:text;user-select:text}
+canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 </style>
 
 <div id="app">
@@ -2425,9 +2432,14 @@ const chiudiMenu=()=>apriMenu(null);
 function chiudiTutto(){chiudiMenu();$('panel').hidden=true;state.sel=null;redraw()}
 const closePops=()=>{if(menu!=='list')chiudiMenu()};
 function posMenu(){const b=$('head').getBoundingClientRect().bottom;document.documentElement.style.setProperty('--menu-top',Math.round(b+8)+'px');areaLibera();redraw()}
-document.addEventListener('pointerdown',e=>{ // clic fuori da un menu aperto lo chiude
-  if(!MENU_EL[menu]||e.target.closest&&e.target.closest('#catInfo'))return; const [el,btn]=MENU_EL[menu];
-  if($(el).contains(e.target)||$(btn).contains(e.target))return; chiudiMenu();
+/* tocco fuori = chiude. Conta solo un tocco vero: se trascini il cielo, pizzichi o scorri, non si chiude niente */
+const TOCCO={x:0,y:0,t:null,mosso:false};
+document.addEventListener('pointerdown',e=>{if(!e.isPrimary)return;TOCCO.x=e.clientX;TOCCO.y=e.clientY;TOCCO.t=e.target;TOCCO.mosso=false},true);
+document.addEventListener('pointermove',e=>{if(TOCCO.t&&Math.hypot(e.clientX-TOCCO.x,e.clientY-TOCCO.y)>8)TOCCO.mosso=true},true);
+document.addEventListener('pointerup',e=>{const t=TOCCO.t;TOCCO.t=null;if(!t||TOCCO.mosso||!e.isPrimary)return;
+  if(t.closest&&t.closest('#catInfo,#tl,#cf,#ocu,#sct,#toast'))return;
+  if(MENU_EL[menu]){const [el,btn]=MENU_EL[menu];if(!$(el).contains(t)&&!$(btn).contains(t))chiudiMenu()}
+  if(telefono()&&!document.querySelector('.bar').classList.contains('chiusa')&&!t.closest('.bar'))tempoAperto(false); // sul telefono anche il pannello di data e ora
 },true);
 function syncLayers(){for(const k of Object.keys(LAY)){const c=$('ly-'+k);if(c)c.checked=LAY[k]}if(typeof legenda==='function'&&$('legenda').childElementCount)legenda();fillList.last=null;try{localStorage.setItem('pf-livelli',JSON.stringify(LAY))}catch(e){}redraw()}
 for(const k of Object.keys(LAY)){$('ly-'+k).onchange=e=>{LAY[k]=e.target.checked;if(k==='sorprese'&&!LAY[k])FX.length=0;syncLayers()}}
@@ -3129,4 +3141,19 @@ function statSoci(){const P=PAGINE.filter(p=>p[3].some(id=>OGGETTI.some(o=>o.id=
    <div style="margin-top:6px">Messier fotografati: <b>${mess} su 110</b></div><div class="tot"><i style="width:${mess/110*100}%"></i></div>
    <b>Articoli per anno</b><div class="st">${righe(Y.map(y=>[y,anni[y]]),mx)}</div>
    <b>Strumenti più usati</b><div class="st">${righe(top.map(([k,n])=>[nome[k]||k,n]),ms)}</div></li>`}
+
+/* ===== APRI E CHIUDI: regole uniche =====
+   - Esc chiude solo ciò che sta sopra: confronto, poi oculare o spiegazione del Meade, poi timeline, poi i menu, poi il pannello dell'oggetto.
+   - Toccare lo sfondo scuro intorno all'oculare o alla spiegazione li chiude, come nei siti normali. */
+addEventListener('keydown',e=>{if(e.key!=='Escape')return;const vis=id=>$(id)&&!$(id).hidden;let fatto=true;
+  if($('catInfo').open)return;
+  if(vis('cf'))$('cf').hidden=true;
+  else if(vis('sct'))$('sct').hidden=true;
+  else if(vis('ocu'))$('ocu').hidden=true;
+  else if(typeof TL!=='undefined'&&TL.aperta)tlApri(false);
+  else if(menu)chiudiMenu();
+  else if(!$('panel').hidden)chiudiTutto();
+  else fatto=false;
+  if(fatto){e.preventDefault();e.stopImmediatePropagation()}},true);
+for(const id of ['ocu','sct'])$(id).addEventListener('click',e=>{if(e.target===$(id))$(id).hidden=true});
 </script>
