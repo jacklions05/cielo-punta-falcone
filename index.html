@@ -1869,7 +1869,14 @@ const SFX={ // ognuno disegna il suono sul nodo d e restituisce la durata
   superbolide:(d,t)=>{rumore(d,t,1.3,{type:'highpass',f0:4000,f1:400,vol:.18,att:.1});rumore(d,t+1.1,2.6,{type:'lowpass',f0:600,f1:40,vol:.5,att:.02});tono(d,t+1.1,60,2.4,{f1:28,vol:.35});return 3.6},
   laser:(d,t)=>{for(let i=0;i<3;i++)tono(d,t+i*.2,1600,.18,{type:'square',f1:220,vol:.04});return .7},
   // Jingle Bells (1857, di pubblico dominio), con i sonagli
-  slitta:(d,t)=>{melodia(d,t,[76,76,76,0,76,76,76,0,76,79,72,74,76],.2,{type:'triangle',vol:.08});for(let i=0;i<14;i++)rumore(d,t+i*.2,.12,{type:'highpass',f0:7000,vol:.06});return 3},
+  slitta:(d,t)=>{ /* il ritornello intero, fino alla chiusa sul Do: una nota ogni ottavo, 0 = la nota prima continua */
+    const E=76,D=74,C=72,F=77,G=79,a=[E,0,E,0,E,0,0,0, E,0,E,0,E,0,0,0, E,0,G,0,C,0,0,D, E,0,0,0,0,0,0,0, F,0,F,0,F,0,0,F, F,0,E,0,E,0,E,E],
+      A=[...a,E,0,D,0,D,0,E,0, D,0,0,0,G,0,0,0, ...a,G,0,G,0,F,0,D,0, C,0,0,0,0,0,0,0],dt=.14;
+    melodia(d,t,A,dt,{type:'triangle',vol:.08});
+    const B=[48,48,48,48,53,48,50,43, 48,48,48,48,53,48,43,48]; /* il basso, una nota per battuta: Do, Fa, Re, Sol */
+    B.forEach((m,i)=>tono(d,t+i*8*dt,mtof(m),8*dt*.9,{type:'sine',vol:.06,att:.03}));
+    for(let i=0;i<A.length/2;i++)rumore(d,t+i*2*dt,.1,{type:'highpass',f0:7000,vol:i%2?.035:.06}); /* i sonagli a ogni quarto */
+    return A.length*dt+.6},
   befana:(d,t)=>{melodia(d,t,[69,72,76,74,72,71,69,0,76,74,72,71,72],.16,{type:'triangle',vol:.08});return 2.4},
   fantasma:(d,t)=>{tono(d,t,520,2.6,{f1:330,vib:5,vibD:12,vol:.08,att:.5});tono(d,t+.4,390,2.4,{f1:260,vib:4,vibD:10,vol:.05,att:.6});return 2.8},
   pipistrelli:(d,t)=>{for(let i=0;i<6;i++)tono(d,t+i*.18,3500+Math.random()*1500,.05,{vol:.03});return 1.2},
