@@ -258,6 +258,22 @@ html{-webkit-tap-highlight-color:transparent}
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea,select,#panel h2,#panel .hint,#panel dl,#panel .photo .t,#tl dl,#tl .tlTit,#cf .cfInfo,#ocuInfo,#sctTesto,#toast{-webkit-user-select:text;user-select:text}
 canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* ===== Visita l'osservatorio: contatti e prenotazione ===== */
+#vis{position:fixed;inset:0;z-index:74;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+#vis[hidden]{display:none}
+#vis .visBox{background:#121110;border:1px solid var(--rule);border-radius:18px;max-width:420px;width:100%;max-height:100%;overflow:auto;padding:18px 18px 14px;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+#vis h2{margin:0 0 4px;font:600 1.3rem var(--f-display)}
+#vis p{margin:0 0 12px;color:#cfcdc8;font-size:.86rem;line-height:1.45}
+#vis .visLink{display:flex;align-items:center;gap:10px;padding:.65rem .8rem;border:1px solid var(--rule);border-radius:12px;margin-bottom:8px;color:var(--ink);text-decoration:none;background:#181716}
+#vis .visLink:hover{border-color:var(--accent)}
+#vis .visLink.prima{background:#2a2112;border-color:#6b5328}
+#vis .visLink b{font-weight:600;font-size:.9rem}
+#vis .visLink small{display:block;color:var(--muted);font-size:.74rem;margin-top:1px;-webkit-user-select:text;user-select:text}
+#vis .visLink span:first-child{font-size:1.15rem;width:1.4em;text-align:center}
+#vis .visSoc{display:flex;gap:8px;margin-top:4px}
+#vis .visSoc a{flex:1;text-align:center;padding:.5rem;border:1px solid var(--rule);border-radius:10px;color:var(--ink);text-decoration:none;font-size:.8rem}
+#vis .visSoc a:hover{border-color:var(--accent)}
+#vis .visX{float:right}
 </style>
 
 <div id="app">
@@ -273,6 +289,7 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
     <div class="tools" id="tools">
       <button id="bList" aria-pressed="false">Oggetti fotografati</button>
       <button id="bTl" aria-pressed="false" title="L'archivio in ordine di pubblicazione, con i filtri">Timeline</button>
+      <button id="bVis" aria-pressed="false" title="Contatti e prenotazione delle visite">Visita l'osservatorio</button>
       <button id="bElba">Verso l'Elba</button>
       <button id="bAll">Tutto il cielo</button>
       <button id="bLay" aria-pressed="false" aria-controls="layers">Livelli</button>
@@ -358,6 +375,22 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 <div id="cf" hidden role="dialog" aria-label="Confronta le foto">
   <div class="cfTesta"><h2 id="cfTit"></h2><button id="cfChiudi" aria-label="Chiudi il confronto">✕ Chiudi</button></div>
   <div class="cfCorpo" id="cfCorpo"></div>
+</div>
+<div id="vis" hidden role="dialog" aria-label="Visita l'osservatorio">
+  <div class="visBox">
+    <button class="visX mini" id="visChiudi" aria-label="Chiudi">✕</button>
+    <h2>Visita l'osservatorio</h2>
+    <p>Associazione Astrofili Piombino · osservatorio di Punta Falcone, 57025 Piombino (LI). Per prenotare una serata o chiedere informazioni scrivici:</p>
+    <a class="visLink prima" href="https://wa.me/393534692387?text=Buongiorno%2C%20vorrei%20prenotare%20una%20visita%20all%27osservatorio%20di%20Punta%20Falcone." target="_blank" rel="noopener"><span>💬</span><span><b>Prenota su WhatsApp</b><small>+39 353 469 2387</small></span></a>
+    <a class="visLink" href="mailto:visite@astropiombino.org?subject=Prenotazione%20visita%20osservatorio%20Punta%20Falcone" target="_blank" rel="noopener"><span>✉️</span><span><b>Scrivi un'e-mail</b><small>visite@astropiombino.org</small></span></a>
+    <a class="visLink" href="https://www.google.com/maps/search/?api=1&query=Osservatorio%20astronomico%20Punta%20Falcone%20Piombino" target="_blank" rel="noopener"><span>📍</span><span><b>Come arrivare</b><small>Punta Falcone, Piombino</small></span></a>
+    <a class="visLink" href="http://web.astropiombino.org" target="_blank" rel="noopener"><span>🔭</span><span><b>Sito dell'associazione</b><small>web.astropiombino.org</small></span></a>
+    <div class="visSoc">
+      <a href="https://www.facebook.com/AssociazioneAstrofiliPiombino" target="_blank" rel="noopener">Facebook</a>
+      <a href="https://www.instagram.com/astropiombino_aap/" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://linktr.ee/AstroPiombino" target="_blank" rel="noopener">Tutti i link</a>
+    </div>
+  </div>
 </div>
 <script>
 /* ======================================================================
@@ -2437,7 +2470,7 @@ const TOCCO={x:0,y:0,t:null,mosso:false};
 document.addEventListener('pointerdown',e=>{if(!e.isPrimary)return;TOCCO.x=e.clientX;TOCCO.y=e.clientY;TOCCO.t=e.target;TOCCO.mosso=false},true);
 document.addEventListener('pointermove',e=>{if(TOCCO.t&&Math.hypot(e.clientX-TOCCO.x,e.clientY-TOCCO.y)>8)TOCCO.mosso=true},true);
 document.addEventListener('pointerup',e=>{const t=TOCCO.t;TOCCO.t=null;if(!t||TOCCO.mosso||!e.isPrimary)return;
-  if(t.closest&&t.closest('#catInfo,#tl,#cf,#ocu,#sct,#toast'))return;
+  if(t.closest&&t.closest('#catInfo,#tl,#cf,#ocu,#sct,#toast,#vis'))return;
   if(MENU_EL[menu]){const [el,btn]=MENU_EL[menu];if(!$(el).contains(t)&&!$(btn).contains(t))chiudiMenu()}
   if(telefono()&&!document.querySelector('.bar').classList.contains('chiusa')&&!t.closest('.bar'))tempoAperto(false); // sul telefono anche il pannello di data e ora
 },true);
@@ -3156,4 +3189,11 @@ addEventListener('keydown',e=>{if(e.key!=='Escape')return;const vis=id=>$(id)&&!
   else fatto=false;
   if(fatto){e.preventDefault();e.stopImmediatePropagation()}},true);
 for(const id of ['ocu','sct'])$(id).addEventListener('click',e=>{if(e.target===$(id))$(id).hidden=true});
+/* ===== VISITA L'OSSERVATORIO: contatti e prenotazione (dati dal Linktree dell'associazione) ===== */
+function visApri(on){$('vis').hidden=!on;$('bVis').setAttribute('aria-pressed',on);if(on){if(menu)chiudiMenu();$('visChiudi').focus()}}
+$('bVis').onclick=()=>visApri($('vis').hidden);
+$('visChiudi').onclick=()=>visApri(false);
+$('vis').addEventListener('click',e=>{if(e.target===$('vis'))visApri(false)});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('vis').hidden){visApri(false);e.preventDefault();e.stopImmediatePropagation()}},true);
+if(location.hash==='#visita')visApri(true);
 </script>
