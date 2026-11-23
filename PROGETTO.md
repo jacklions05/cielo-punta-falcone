@@ -37,7 +37,7 @@ Fuori dal file ci sono solo le due mappe della Luna HD, caricate a richiesta con
 ### L'oculare: le scelte importanti
 
 - **Telescopio:** Meade 14″ ACF, D = 356 mm, F = 2845 mm (f/8), costante `FOC_MEADE`.
-- **Oculari veri della cupola** (`OCULARI`, focale in mm e campo apparente in gradi): 40 mm Plössl 45°, 34 mm 64°, 26 mm Plössl 45°, 20 mm 64°, 14 mm 82°. In più 8, 5 e 3,5 mm a 82°, immaginari, solo per la Luna: `OCU_LUNA` è l'indice del primo. **Il cerchio disegnato è proporzionale al campo apparente** (`AFOV_MAX = 82`), così confrontare oculari diversi è corretto.
+- **Oculari veri della cupola** (`OCULARI`, focale in mm e campo apparente in gradi): 40 mm Plössl 45°, 34 mm 64°, 26 mm Plössl 45°, 20 mm 64°, 14 mm 82°. In più 8, 5 e 3,5 mm a 82°, immaginari, disponibili per tutti gli oggetti (`OCU_LUNA` è l'indice del primo, non serve più a nascondere niente). **Il cerchio disegnato è proporzionale al campo apparente** (`AFOV_MAX = 82`), così confrontare oculari diversi è corretto.
 - **Cielo:** SQM 20,15 (Bortle circa 5), da lightpollutionmap. Due fondi, scelti col tasto «Fondo grigio» (`OCU.scuro`, ricordato in localStorage): grigio come uno schizzo, oppure scuro come all'oculare, con luminosità che va come il quadrato della pupilla d'uscita.
 - **Stelle:**
   - entro 0,5° da ogni oggetto sono **vere**, da Gaia DR3: `GAIA_B64` compresso, `GAIA_CAMPI` contiene i centri dei campi coperti;
@@ -49,6 +49,33 @@ Fuori dal file ci sono solo le due mappe della Luna HD, caricate a richiesta con
 - **Seeing:** in WebGL (`SEE`, `seeingGL`): campo di spostamento continuo a più scale che scorre col vento (frozen flow), ballo d'insieme, sfocatura grande quanto il disco di seeing (FWHM 1,5–3″, × massa d'aria^0,6) e brevi istanti di calma. Senza WebGL resta il vecchio metodo a strisce (`seeingStrisce`). Si può spegnere.
 - **Cupola chiusa o puntata fuori dalla fenditura:** l'oculare si oscura (`fenditura(v)`). Vale solo se l'oculare è aperto dal telescopio (`OCU.daTel`). Dal pannello di un oggetto è solo un'anteprima.
 - **Taratura:** alcuni oggetti sono stati confrontati con schizzi di asod.info fatti con aperture e cieli simili: M51 e M33 (Ikebe), M82, M42, M57, M27, M17, M8 (Ikebe), Velo (Ikebe). Gli schizzi non sono stati copiati.
+
+## Pubblicazione, versioni e repository (tolto dal README pubblico)
+
+**Inserirla nel sito AAP.** Basta un iframe in una pagina del sito, che mostra sempre l'ultima versione pubblicata:
+
+```html
+<iframe src="https://jacklions05.github.io/cielo-punta-falcone/"
+        style="width:100%; height:85vh; border:0" allowfullscreen></iframe>
+```
+
+In alternativa un link o pulsante allo stesso indirizzo.
+
+**Versioni precedenti.** Ogni modifica resta nei *Commits*. Per riaprire una versione vecchia: `https://raw.githack.com/jacklions05/cielo-punta-falcone/<codice-commit>/index.html` (al primo accesso githack chiede *Open the page*). Le versioni importanti si possono segnare con un tag (*Releases*, es. `v1`) e usare il nome al posto del codice.
+
+**Aprirla dal computer.** *Code → Download ZIP* e apri `index.html`: funziona tutto tranne la Luna HD, perché il browser blocca le immagini lette da file; resta la Luna normale.
+
+**Contenuto del repository.**
+
+| Percorso | Cosa contiene |
+|---|---|
+| `index.html` | La mappa intera (circa 4 MB, quasi tutto dati) |
+| `luna_alb_hd.jpg`, `luna_pend_hd.jpg` | Luna HD (albedo e pendenze, NASA LRO), caricate solo quando servono |
+| `docs/oculare-simulazioni.pdf` | Tutte le simulazioni all'oculare |
+| `strumenti/`, `strumenti/dati/` | Script Python e dati di partenza (OpenNGC, stelle Gaia estratte, campi) |
+| `PROGETTO.md` | Questa guida |
+
+**Fonti.** Stelle deboli: Gaia DR3 dal catalogo locale di Siril. Stelle brillanti: d3-celestial (Hipparcos/BSC). Oggetti: OpenNGC (CC-BY-SA 4.0). Luna all'oculare: NASA LRO (LROC WAC, LOLA LDEM). Posizioni di Sole, Luna e pianeti calcolate nella pagina, i pianeti con gli elementi orbitali approssimati del JPL (Standish). Taratura delle simulazioni su schizzi di asod.info, solo come riferimento: **non citarlo nelle pagine pubbliche**, lì si dice solo che le viste sono simulate.
 
 ## Dati e come rigenerarli (`strumenti/`)
 
