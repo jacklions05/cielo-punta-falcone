@@ -274,6 +274,13 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #vis .visSoc a{flex:1;text-align:center;padding:.5rem;border:1px solid var(--rule);border-radius:10px;color:var(--ink);text-decoration:none;font-size:.8rem}
 #vis .visSoc a:hover{border-color:var(--accent)}
 #vis .visX{float:right}
+
+/* tasto sempre visibile in basso a destra, separato dai comandi: chi guarda la mappa trova subito come venire all'osservatorio */
+.visFab{position:absolute;z-index:7;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(var(--bar-h,120px) + 14px);border-radius:999px;padding:.6rem 1rem;font:600 .85rem var(--f-ui);background:#2a2112;border:1px solid #8a6a30;color:#f3d9a8;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.visFab:hover{border-color:var(--accent);color:#fff}
+#panel:not([hidden])~.visFab{display:none}
+@media (min-width:1000px){.visFab{bottom:calc(16px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:640px){.visFab{padding:.5rem .8rem;font-size:.78rem}}
 </style>
 
 <div id="app">
@@ -289,7 +296,6 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
     <div class="tools" id="tools">
       <button id="bList" aria-pressed="false">Oggetti fotografati</button>
       <button id="bTl" aria-pressed="false" title="L'archivio in ordine di pubblicazione, con i filtri">Timeline</button>
-      <button id="bVis" aria-pressed="false" title="Contatti e prenotazione delle visite">Visita l'osservatorio</button>
       <button id="bElba">Verso l'Elba</button>
       <button id="bAll">Tutto il cielo</button>
       <button id="bLay" aria-pressed="false" aria-controls="layers">Livelli</button>
@@ -330,6 +336,7 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   </div>
 
   <aside id="panel" hidden aria-live="polite"></aside>
+  <button id="bVis" class="visFab" aria-pressed="false" title="Contatti e prenotazione delle visite all'osservatorio"><span aria-hidden="true">🔭</span> Prenota una visita</button>
   <div id="cupComandi" hidden role="group" aria-label="Pulsantiera della montatura"><div class="lcd" id="lcd"><b>MEADE</b><span id="lcd1">—</span><span id="lcd2">—</span></div><div class="tasti"><span></span><button data-d="N" aria-label="Su">▲</button><span></span><button data-d="E" aria-label="Sinistra">◀</button><span></span><button data-d="O" aria-label="Destra">▶</button><span></span><button data-d="S" aria-label="Giù">▼</button><span></span></div><div class="tasti2"><button id="tVel" title="Velocità delle frecce">Veloce</button><button id="tIns" aria-pressed="true" title="Inseguimento: il telescopio segue la rotazione del cielo">Insegue</button><button id="tCen" title="Torna a centrare l'oggetto scelto">Centra</button><button id="tPark" title="Parcheggio: verso il polo">Park</button></div><button id="bOcu" class="port">Guarda all'oculare</button><button id="bPort" class="port" aria-pressed="false">Chiudi la cupola</button><button id="bSct" class="port">Come funziona il Meade</button></div>
 <div id="sct" hidden role="dialog" aria-label="Come funziona il telescopio"><div class="sctBox"><div class="ocuTop"><span>Meade 14″ ACF · come funziona</span><button id="sctChiudi" aria-label="Chiudi">✕</button></div><div id="sctLiv" role="group" aria-label="Livello"><button aria-pressed="true">Semplice</button><button aria-pressed="false">Approfondito</button></div><canvas id="sctCv"></canvas><div id="sctTesto"></div></div></div>
 <div id="ocu" hidden role="dialog" aria-label="Vista all'oculare"><div class="ocuBox"><div class="ocuTop"><span id="ocuTit"></span><button id="ocuChiudi" aria-label="Chiudi">✕</button></div><canvas id="ocuCv"></canvas><div class="ocuRow"><div id="ocuEp" role="group" aria-label="Oculare"></div><div class="ocuPad" role="group" aria-label="Muovi il telescopio"><button data-o="E" aria-label="Sinistra">◀</button><button data-o="N" aria-label="Su">▲</button><button data-o="S" aria-label="Giù">▼</button><button data-o="O" aria-label="Destra">▶</button><button id="ocuVel">Lento</button></div><button id="ocuSee" aria-pressed="true" title="La turbolenza dell'aria che fa tremolare l'immagine">Seeing</button><button id="ocuFondo" title="Fondo cielo: grigio come uno schizzo, o scuro come appare all'oculare">Fondo grigio</button></div><p id="ocuInfo"></p><p class="ocuNota">Simulazione disegnata di quello che vede l'occhio, non una foto: in bianco e nero (colori solo per i pianeti), orientata come a occhio nudo con lo zenit in alto: al diagonale vero l'immagine è speculare. La Luna viene dalle mappe NASA del Lunar Reconnaissance Orbiter. Le stelle vicino agli oggetti sono quelle vere (Gaia DR3).</p></div></div>
