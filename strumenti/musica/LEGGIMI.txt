@@ -1,0 +1,5 @@
+Brani classici della mappa.
+1. Partiture LilyPond dal Mutopia Project (gym, clair2 con i tempi delle sezioni aggiunti, moon, holst).
+2. pip install lilypond mido ; lilypond -dno-print-pages file.ly  -> file.midi (in una cartella ly/)
+3. python prepara.py -> brani.json (esecuzione "umana" e codifica compatta), da incollare in BRANI_DATI.
+piano.js e' il pianoforte sintetizzato, uguale a quello dentro index.html.
