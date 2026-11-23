@@ -309,11 +309,13 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   </div>
 
   <div id="suoniPop" class="pop" hidden>
-    <label><input type="checkbox" id="suOn"> Suoni attivi</label>
-    <hr><div class="suTit">Musica</div>
-    <label><input type="radio" name="suMus" value="orig"> Originale</label>
+    <div class="suTit">Cosa ascolti</div>
+    <label><input type="radio" name="suMus" value="muto"> Muto <small>(nessun suono)</small></label>
+    <label><input type="radio" name="suMus" value="no"> Solo effetti</label>
+    <label><input type="radio" name="suMus" value="orig"> Musica originale con gli effetti</label>
+    <div class="suTit" style="margin-top:6px">Brani al pianoforte <small>(gli effetti si spengono)</small></div>
     <div id="suBrani"></div>
-    <label><input type="radio" name="suMus" value="no"> Nessuna, solo effetti</label>
+    <hr><label><input type="checkbox" id="suFx"> Effetti sonori <small>(UFO, meteore, temporale…)</small></label>
     <hr><div class="suTit">Alla fine del brano</div>
     <label><input type="radio" name="suModo" value="uno"> Ricomincia lo stesso</label>
     <label><input type="radio" name="suModo" value="tutti"> Passa al successivo</label>
@@ -1850,7 +1852,7 @@ function puntoInVista(altMin=14){const s=Math.min(state.fov,140);return hor(stat
    un tappeto di musica lenta e un solo canale per gli effetti: un effetto nuovo prende il posto del precedente
    solo se è più importante, così non si sovrappongono mai due motivetti */
 const AU={on:false,c:null,k:-1,busy:0,pri:0,cur:null};
-try{AU.want=localStorage.getItem('pf-suoni')==='1'}catch(e){}
+try{AU.want=localStorage.getItem('pf-suoni')==='1';AU.effetti=localStorage.getItem('pf-effetti')!=='0'}catch(e){AU.effetti=true}
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 function auInit(){if(AU.c)return true;const C=window.AudioContext||window.webkitAudioContext;if(!C)return false;const c=AU.c=new C();
   AU.out=c.createGain();AU.out.gain.value=.8;AU.out.connect(c.destination);
@@ -1905,7 +1907,7 @@ const SFX={ // ognuno disegna il suono sul nodo d e restituisce la durata
   nave:(d,t)=>{tono(d,t,110,1.6,{type:'sawtooth',vol:.05,att:.1});tono(d,t,138.6,1.6,{type:'sawtooth',vol:.04,att:.1});return 1.7},
   tuono:(d,t)=>{rumore(d,t,3,{type:'lowpass',f0:300,f1:40,vol:.45,att:.05});return 3},
   fuoco:(d,t)=>{rumore(d,t,.35,{type:'lowpass',f0:1200,f1:100,vol:.12});return .35}};
-function sfx(nome,pri=1){if(!AU.on||!AU.c||document.hidden||!SFX[nome])return;const c=AU.c,t=c.currentTime;if(t<AU.busy&&pri<=AU.pri)return;
+function sfx(nome,pri=1){if(!AU.on||!AU.effetti||!AU.c||document.hidden||!SFX[nome])return;const c=AU.c,t=c.currentTime;if(t<AU.busy&&pri<=AU.pri)return;
   if(AU.cur&&t<AU.busy){AU.cur.gain.setTargetAtTime(0,t,.05)} // l'effetto meno importante sfuma via
   const g=c.createGain();g.gain.value=1;g.connect(AU.fx);const rs=c.createGain();rs.gain.value=.35*fxLivello();g.connect(rs);rs.connect(AU.rev);
   const dur=SFX[nome](g,t+.02);AU.cur=g;AU.busy=t+dur;AU.pri=pri;
@@ -1975,7 +1977,8 @@ function lettoreAvvia(k){lettoreFerma();if(!AU.on||!AU.c)return;k=k||AU.brano;if
       if(LET.i>=LET.note.length&&now>LET.fine+4){ // finito: una pausa, poi lo stesso brano o il prossimo
         const ks=BRANI_CL.map(x=>x[0]),nx=AU.modo==='tutti'?ks[(ks.indexOf(k)+1)%ks.length]:k;lettoreAvvia(nx)}};
     LET.iv=setInterval(passo,200);passo()})}
-function sceltaMusica(k){AU.brano=k;try{localStorage.setItem('pf-musica',k)}catch(e){}
+function effetti(on){AU.effetti=on;try{localStorage.setItem('pf-effetti',on?'1':'0')}catch(e){}if(!on&&AU.cur&&AU.c)AU.cur.gain.setTargetAtTime(0,AU.c.currentTime,.1)}
+function sceltaMusica(k){if(k==='muto'){suoni(false);return}effetti(k==='orig'||k==='no');AU.brano=k;try{localStorage.setItem('pf-musica',k)}catch(e){}
   if(AU.c){AU.fx.gain.setTargetAtTime(fxLivello(),AU.c.currentTime,.3)}
   if(!AU.on){suoni(true);return}
   lettoreFerma();if(k==='orig')musica();else lettoreAvvia(k);pianoPrepara()}
@@ -2059,7 +2062,7 @@ function tuono(g,t,km){const c=AU.c,s=c.createBufferSource(),f=c.createBiquadFil
   v.gain.exponentialRampToValueAtTime(.0005,t+dur);s.connect(f);f.connect(f2);f2.connect(v);v.connect(g);s.start(t,Math.random()*5);s.stop(t+dur+.1);
   if(km<1.2)rumore(g,t,.3,{type:'highpass',f0:3000,f1:700,vol:A*.7,att:.003}); // lo schiocco del fulmine vicino
   tono(g,t,55,1.2+km*.4,{f1:28,vol:A*.45,att:.01+km*.05})}
-function tempestaAudio(f){if(!AU.on||!AU.c||f.audio)return;f.audio=true;const c=AU.c,D=f.dur/1000,now=c.currentTime,k0=(performance.now()-f.t0)/f.dur,T0=now-k0*D; // T0 = inizio della tempesta sull'orologio audio
+function tempestaAudio(f){if(!AU.on||!AU.effetti||!AU.c||f.audio)return;f.audio=true;const c=AU.c,D=f.dur/1000,now=c.currentTime,k0=(performance.now()-f.t0)/f.dur,T0=now-k0*D; // T0 = inizio della tempesta sull'orologio audio
   if(!AU.nl){const b=c.createBuffer(1,c.sampleRate*7,c.sampleRate),d=b.getChannelData(0);let p=0;for(let i=0;i<d.length;i++){const w=Math.random()*2-1;p=.97*p+.03*w;d[i]=w*.6+p*3}AU.nl=b}
   if(AU.cur&&now<AU.busy)AU.cur.gain.setTargetAtTime(0,now,.1);
   const g=c.createGain();g.connect(AU.fx);AU.cur=g;AU.busy=T0+D;AU.pri=99;f.g=g; // nessun altro effetto finché piove
@@ -3055,18 +3058,18 @@ $('tVel').onclick=e=>{TEL.rate=(TEL.rate+1)%3;e.currentTarget.textContent=RATE[T
 $('tIns').onclick=e=>{TEL.insegui=!TEL.insegui;e.currentTarget.setAttribute('aria-pressed',TEL.insegui);if(TEL.v)TEL.goal=TEL.insegui?{e:eqDi(TEL.v)}:{h:TEL.v.slice()};beep(1)};
 $('tCen').onclick=()=>{if(state.sel){TEL.goal={id:state.sel};TEL.insegui=true;$('tIns').setAttribute('aria-pressed',true);TEL.arrivo=state.sel;beep(1)}};
 $('tPark').onclick=()=>{TEL.goal={h:hor(0,Math.asin(sinPhi)*R2D)};TEL.insegui=false;$('tIns').setAttribute('aria-pressed',false);TEL.park=true;beep(1)};
-function beep(n){if(!AU.on||!AU.c)return;const t=AU.c.currentTime;for(let i=0;i<n;i++)tono(AU.out,t+i*.14,1850,.07,{type:'square',vol:.035,att:.003})} // il bip della pulsantiera Meade
+function beep(n){if(!AU.on||!AU.effetti||!AU.c)return;const t=AU.c.currentTime;for(let i=0;i<n;i++)tono(AU.out,t+i*.14,1850,.07,{type:'square',vol:.035,att:.003})} // il bip della pulsantiera Meade
 function aggiornaPulsantiera(azT){if($('cupComandi').hidden||!TEL.v)return;const e=[M[0]*TEL.v[0]+M[3]*TEL.v[1]+M[6]*TEL.v[2],M[1]*TEL.v[0]+M[4]*TEL.v[1]+M[7]*TEL.v[2],M[5]*TEL.v[1]+M[8]*TEL.v[2]];
   const ra=((Math.atan2(e[1],e[0])*R2D+360)%360)/15,de=Math.asin(Math.max(-1,Math.min(1,e[2])))*R2D,h=Math.floor(ra),m=Math.floor((ra-h)*60),dd=Math.floor(Math.abs(de)),dm=Math.floor((Math.abs(de)-dd)*60);
   const t1=`AR ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m Dec ${de<0?'−':'+'}${dd}°${String(dm).padStart(2,'0')}'`,t2=PORT.eff>.002&&PORT.eff<.998?(PORT.chiuso||tempestaOra()?'chiusura…':'apertura…'):PORT.eff>=.998?(tempestaOra()?'piove: chiusa':'cupola chiusa'):(()=>{const g=TEL.goal&&TEL.goal.id&&OGGETTI.find(o=>o.id===TEL.goal.id);return g&&g._rd&&altaz(vecOf(g))[1]<3})()?'sotto l\'orizzonte!':TEL.pt?'puntamento…':TEL.dome?'cupola in moto…':TEL.park&&!TEL.insegui?'parcheggiato':(TEL.goal&&TEL.goal.id?(OGGETTI.find(o=>o.id===TEL.goal.id)||{}).nome+' · ':'')+(TEL.insegui?'insegue':'fermo')+' · '+RATE[TEL.rate][1].toLowerCase();
   if($('lcd1').textContent!==t1)$('lcd1').textContent=t1;if($('lcd2').textContent!==t2)$('lcd2').textContent=t2}
 // scegliere un oggetto lo fa puntare (la cupola poi gira da sola)
 $('bRed').onclick=e=>{const on=$('app').classList.toggle('rosso');e.currentTarget.setAttribute('aria-pressed',on);if(menu==='tools')chiudiMenu()};
-$('bSuoni').onclick=()=>apriMenu(menu==='suoni'?null:'suoni');
+$('bSuoni').onclick=()=>{if(!AU.on){if(menu==='tools'&&telefono())chiudiMenu();suoni(true);if(AU.on&&typeof toast==='function')toast('Suoni attivi · tocca di nuovo «Suoni» per scegliere la musica o il muto');return}apriMenu(menu==='suoni'?null:'suoni')};
 $('suBrani').innerHTML=BRANI_CL.map(([k,n,a])=>`<label><input type="radio" name="suMus" value="${k}"> <span>${n}<br><small>${a}</small></span></label>`).join('');
-function suoniUI(){$('suOn').checked=AU.on;document.querySelectorAll('[name=suMus]').forEach(r=>r.checked=r.value===AU.brano);document.querySelectorAll('[name=suModo]').forEach(r=>r.checked=r.value===AU.modo)}
+function suoniUI(){$('suFx').checked=AU.effetti;document.querySelectorAll('[name=suMus]').forEach(r=>r.checked=AU.on?r.value===AU.brano:r.value==='muto');document.querySelectorAll('[name=suModo]').forEach(r=>r.checked=r.value===AU.modo)}
 suoniUI();$('bSuoni').addEventListener('click',suoniUI);
-$('suOn').onchange=e=>{suoni(e.target.checked);suoniUI()};
+$('suFx').onchange=e=>{effetti(e.target.checked);if(e.target.checked&&!AU.on)suoni(true);suoniUI()};
 document.querySelectorAll('[name=suMus]').forEach(r=>r.onchange=()=>{sceltaMusica(r.value);suoniUI()});
 document.querySelectorAll('[name=suModo]').forEach(r=>r.onchange=()=>{AU.modo=r.value;try{localStorage.setItem('pf-modo',r.value)}catch(e){}});
 if(AU.want)document.addEventListener('pointerdown',()=>{if(!AU.on)suoni(true)},{once:true}); // il browser vuole un tocco prima di suonare
