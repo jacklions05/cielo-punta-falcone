@@ -580,6 +580,7 @@ const CATALOGHI={
   Mel:{nome:'Melotte',pre:/^Mel /,anno:'1915',testo:"Philibert Jacques Melotte, all'Osservatorio di Greenwich, nel 1915 elencò 245 ammassi di stelle visibili nelle carte fotografiche di John Franklin-Adams. Ci sono anche ammassi grandi e vicini come le Iadi (Mel 25), che il NGC non riporta."},
   Abell:{nome:'Abell',pre:/^Abell /,anno:'1958',testo:"George Abell, sulle lastre della Palomar Sky Survey, contò 2712 ammassi ricchi di galassie, nel 1958. Con l'aggiunta del cielo australe, nel 1989, si è arrivati a 4073."},
   Arp:{nome:'Arp',pre:/^Arp /,anno:'1966',testo:"L'Atlas of Peculiar Galaxies di Halton Arp, del 1966, raccoglie 338 galassie dalla forma strana: galassie che si scontrano, si deformano o hanno code di stelle. Arp voleva capire come si formano le galassie guardando quelle che non seguono le regole."}};
+CATALOGHI.SN={nome:'Supernove',pre:/^SN /,anno:'dal 1885',testo:"Ogni supernova riceve un nome ufficiale: SN, l'anno della scoperta e una o più lettere date in ordine di scoperta (a, b… z, poi aa, ab…). Oggi lo assegna il Transient Name Server dell'Unione Astronomica Internazionale. Qui ci sono le supernove fotografate dai soci, ciascuna insieme alla galassia che la ospita: toccandola si va alla galassia."};
 const sigleDi=o=>SIGLE[o.id]?SIGLE[o.id].split('|'):[];
 const catDi=g=>Object.keys(CATALOGHI).find(k=>CATALOGHI[k].pre.test(g));
 const numDi=g=>parseFloat(g.replace(/^\D+/,''))||0;
@@ -2517,8 +2518,12 @@ const fmtBreve=iso=>iso?new Date(iso+'T12:00:00').toLocaleDateString('it-IT',{mo
 for(const o of OGGETTI)o._nomeN=norma([o.id,o.nome,o.alias].join(' '));
 for(const o of OGGETTI){o._sigle=sigleDi(o);o._cerca=norma([o.id,o.nome,o.alias,o.tipo,o.cost,...o._sigle.map(g=>' '+g+' '+(CATALOGHI[catDi(g)]||{}).nome),...o.foto.map(f=>f.titolo)].join(' '));o._nomeN+=norma(o._sigle.join(' '))}
 /* supernove fotografate dai soci, con la sigla ufficiale (TNS), legate alla galassia che le ospita: si trovano cercando «SN 2023ixf», «2023ixf» o «supernova» */
-const SUPERNOVE=[['SN 2020jfo','M61','tipo II, scoperta a maggio 2020'],['SN 2023ixf','M101','tipo II, scoperta a maggio 2023'],['SN 2026fvx','N4205','aprile 2026'],['SN 2026kid','N5907','aprile 2026'],['SN 2026aaiv','N7331','tipo Ia, scoperta il 1° settembre 2026']];
-for(const [n,id,info] of SUPERNOVE){const o=OGGETTI.find(x=>x.id===id);if(!o)continue;(o._sn=o._sn||[]).push([n,info]);o._cerca+=norma(n+' supernova');o._nomeN+=norma(n)}
+const SUPERNOVE=[ /* sito storico */
+  ['SN 2011fe','M101','tipo Ia, scoperta ad agosto 2011 come PTF 11kly'],['SN 2012aw','M96G','in M 95, tipo II, marzo 2012'],['SN 2013am','LEO3','in M 65, tipo II, marzo 2013'],
+  ['SN 2013df','N4414','tipo IIb, giugno 2013'],['SN 2013ev','IC1296','agosto 2013'],['SN 2014J','M82','tipo Ia, gennaio 2014'],['SN 2014bc','M106','tipo II, maggio 2014'],['SN 2017eaw','N6946','tipo II, maggio 2017'],
+  /* sito attuale */
+  ['SN 2020jfo','M61','tipo II, maggio 2020'],['SN 2023ixf','M101','tipo II, maggio 2023'],['SN 2026fvx','N4205','aprile 2026'],['SN 2026kid','N5907','aprile 2026'],['SN 2026aaiv','N7331','tipo Ia, settembre 2026']];
+for(const [n,id,info] of SUPERNOVE){const o=OGGETTI.find(x=>x.id===id);if(!o)continue;(o._sn=o._sn||[]).push([n,info]);o._sigle.push(n);o._cerca+=norma(n+' supernova');o._nomeN+=norma(n)} // la sigla SN entra tra i cataloghi dell'oggetto: si cerca e si filtra, ma non crea un oggetto nuovo sulla mappa
 const snTag=(o,q)=>{if(!q||!o._sn)return '';const t=o._sn.filter(([n])=>norma(n).includes(q)||'supernova'.includes(q)&&q.length>3);return t.length?`<span class="sig">${t.map(x=>x[0]).join(' · ')}</span>`:''};
 const giornoDi=iso=>{const [y,m,d]=iso.split('-').map(Number);return Math.max(0,Math.min(DAYS,Math.round((Date.UTC(y,m-1,d)-Date.UTC(E0[0],E0[1]-1,E0[2]))/864e5)))};
 /* va all'oggetto: se alla data scelta non c'è (o non è ancora stato fotografato) salta alla sua foto più recente */
@@ -3095,7 +3100,7 @@ $('bTempo').onclick=()=>tempoAperto(document.querySelector('.bar').classList.con
 if(telefono())tempoAperto(false);
 $('bList').onclick=()=>{apriMenu(menu==='list'?null:'list');if(menu==='list'&&innerWidth>=900)setTimeout(()=>$('cerca').focus(),0)};
 $('cerca').oninput=()=>{fillList.last=null;fillList()};
-{const n=k=>OGGETTI.filter(o=>o.foto.length&&sigleDi(o).some(g=>catDi(g)===k)).length;
+{const n=k=>OGGETTI.filter(o=>o.foto.length&&(o._sigle||sigleDi(o)).some(g=>catDi(g)===k)).length;
   $('catalogo').innerHTML='<option value="">Tutti gli oggetti</option>'+Object.entries(CATALOGHI).filter(([k])=>n(k)).map(([k,c])=>`<option value="${k}">${c.nome} (${n(k)})</option>`).join('')}
 function fillStrum(){const n=k=>OGGETTI.filter(o=>o.foto.some(f=>f.str.includes(k))).length;
   $('strum').innerHTML='<option value="">Tutti gli strumenti</option>'+STRUMENTI.map(([g,l])=>`<optgroup label="${g}">`+l.filter(([k])=>n(k)).map(([k,t])=>`<option value="${k}">${t} (${n(k)})</option>`).join('')+'</optgroup>').join('')}
