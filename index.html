@@ -328,7 +328,7 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
     <hr><div class="suTit">Alla fine del brano</div>
     <label><input type="radio" name="suModo" value="uno"> Ricomincia lo stesso</label>
     <label><input type="radio" name="suModo" value="tutti"> Passa al successivo</label>
-    <p class="suNota">Brani di pubblico dominio, suonati dalla pagina su partiture del Mutopia Project (Beethoven: CC BY-SA 2.5).</p>
+    <p class="suNota">Brani di pubblico dominio, su partiture del Mutopia Project (Beethoven: CC BY-SA 2.5). Pianoforte: Salamander Grand Piano di Alexander Holm (CC BY 3.0).</p>
   </div>
 
   <div id="layers" class="pop" hidden>
@@ -1937,7 +1937,16 @@ function suoni(on){if(on&&!auInit())return;AU.on=on;try{localStorage.setItem('pf
    - un piccolo colpo di martelletto all'attacco.
    Si preparano una volta sola 28 tasti (uno ogni tre semitoni) e le note in mezzo si ottengono cambiando di poco la velocità di lettura. */
 const PIANO={buf:null,keys:[],sr:0,pronto:null};
-function pianoPrepara(){if(PIANO.pronto)return PIANO.pronto;
+/* pianoforte vero: campioni del Salamander Grand Piano (Yamaha C5, Alexander Holm, CC BY 3.0), uno ogni terza minore da C1 a D#7,
+   nella cartella piano/ e scaricati solo quando si sceglie un brano. Se non si possono leggere (pagina aperta da file) resta il pianoforte sintetico qui sotto. */
+const PIANO_CAMP=['C','Ds','Fs','A'];
+function pianoPrepara(){if(PIANO.pronto)return PIANO.pronto;if(!AU.c)return Promise.resolve(false);
+  const nomi=[],keys=[];for(let m=24;m<=99;m+=3){nomi.push(PIANO_CAMP[((m-24)/3)%4]+(Math.floor((m-24)/12)+1));keys.push(m)}
+  PIANO.pronto=Promise.all(nomi.map(n=>fetch('piano/'+n+'.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(a=>new Promise((ok,ko)=>AU.c.decodeAudioData(a,ok,ko)))))
+    .then(B=>{PIANO.keys=keys;PIANO.ab=B;PIANO.campioni=true;PIANO.buf=true;return true})
+    .catch(()=>{PIANO.pronto=null;return pianoSintetico()});
+  return PIANO.pronto}
+function pianoSintetico(){if(PIANO.pronto)return PIANO.pronto;
   const sr=32000,keys=[];for(let m=24;m<=105;m+=3)keys.push(m);const rn=rngDa(4242),buf=[];
   const lun=m=>m<45?7:m<66?5.5:m<84?3.8:2.4;
   const tasto=m=>{const L=Math.round(lun(m)*sr),x=new Float32Array(L),f0=mtof(m),B=1.2e-4*Math.pow(2,(m-60)/16);
@@ -1959,11 +1968,11 @@ function pianoPrepara(){if(PIANO.pronto)return PIANO.pronto;
       if(ki<keys.length)setTimeout(passo,0);else{PIANO.keys=keys;PIANO.sr=sr;PIANO.buf=buf;ok(true)}};passo()})}
 /* suona una nota: m = tasto MIDI, t = quando, du = quanto resta abbassato (pedale compreso), v = forza 1–127 */
 function pianoNota(c,dest,m,t,du,v){if(!PIANO.buf)return;let ki=Math.round((m-24)/3);ki=Math.max(0,Math.min(PIANO.keys.length-1,ki));
-  if(!PIANO.ab)PIANO.ab=[];if(!PIANO.ab[ki]||PIANO.ab[ki].ctx!==c){const x=PIANO.buf[ki],b=c.createBuffer(1,x.length,PIANO.sr);b.getChannelData(0).set(x);b.ctx=c;PIANO.ab[ki]=b}
+  if(!PIANO.ab)PIANO.ab=[];if(!PIANO.campioni&&(!PIANO.ab[ki]||PIANO.ab[ki].ctx!==c)){const x=PIANO.buf[ki],b=c.createBuffer(1,x.length,PIANO.sr);b.getChannelData(0).set(x);b.ctx=c;PIANO.ab[ki]=b}
   const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain(),f0=mtof(m),u=v/127;
   s.buffer=PIANO.ab[ki];s.playbackRate.value=Math.pow(2,(m-PIANO.keys[ki])/12);
-  f.type='lowpass';f.Q.value=.4;f.frequency.value=Math.min(16000,f0*(1.6+u*u*9)+500); // più forte = più brillante, come il feltro del martelletto
-  const A=.55*Math.pow(u,1.7);g.gain.setValueAtTime(A,t);const fine=t+Math.max(.06,du),sm=m>=89?.35:.07; // le note più acute non hanno smorzatori
+  f.type='lowpass';f.Q.value=.4;f.frequency.value=Math.min(18000,PIANO.campioni?f0*(3+u*u*14)+1500:f0*(1.6+u*u*9)+500); // più forte = più brillante, come il feltro del martelletto
+  const A=(PIANO.campioni?.96:.55)*Math.pow(u,1.7); /* i campioni veri suonano più piano del sintetico: stesso volume percepito */g.gain.setValueAtTime(A,t);const fine=t+Math.max(.06,du),sm=m>=89?.35:.07; // le note più acute non hanno smorzatori
   g.gain.setTargetAtTime(0,fine,sm);
   let n=g;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=Math.max(-.5,Math.min(.5,(m-64)/50));g.connect(p);n=p}
   s.connect(f);f.connect(g);n.connect(dest);s.start(t);s.stop(Math.min(t+s.buffer.duration/s.playbackRate.value,fine+sm*6))}
