@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cielo Punta Falcone">
 <title>Cielo di Punta Falcone</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -283,6 +287,10 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #panel:not([hidden])~.visFab{display:none}
 @media (min-width:1000px){.visFab{bottom:calc(16px + env(safe-area-inset-bottom,0px))}}
 @media (max-width:640px){.visFab{padding:.5rem .8rem;font-size:.78rem}}
+
+#bFull{font-size:1.05rem;line-height:1}
+#bFull .fsTxt{display:none;font-size:.85rem}
+@media (max-width:640px){#bFull .fsTxt{display:inline}}
 </style>
 
 <div id="app">
@@ -305,6 +313,7 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
       <button id="bRed" aria-pressed="false" title="Visione notturna">Luce rossa</button>
       <button id="bCupola" aria-pressed="false" title="Il cielo come si vede dalla fenditura della cupola">Dalla cupola</button>
       <button id="bSuoni" aria-pressed="false" aria-controls="suoniPop" title="Musica di sottofondo ed effetti sonori">Suoni</button>
+      <button id="bFull" aria-pressed="false" title="Schermo intero (tasto F)" aria-label="Schermo intero" hidden>⛶<span class="fsTxt"> Schermo intero</span></button>
     </div>
   </div>
 
@@ -3296,4 +3305,17 @@ $('visChiudi').onclick=()=>visApri(false);
 $('vis').addEventListener('click',e=>{if(e.target===$('vis'))visApri(false)});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('vis').hidden){visApri(false);e.preventDefault();e.stopImmediatePropagation()}},true);
 if(location.hash==='#visita')visApri(true);
+
+/* ===== SCHERMO INTERO: tasto nel menu e tasto F sul PC. Su iPhone il browser non lo permette e il tasto resta nascosto
+   (lì si ottiene con Condividi → Aggiungi a schermata Home, grazie ai meta apple-mobile-web-app) ===== */
+const FS={el:document.documentElement,
+  on:()=>!!(document.fullscreenElement||document.webkitFullscreenElement),
+  ok:()=>!!(document.fullscreenEnabled||document.webkitFullscreenEnabled)};
+function fsCambia(){try{if(FS.on()){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
+  else{const r=(FS.el.requestFullscreen||FS.el.webkitRequestFullscreen).call(FS.el);if(r&&r.catch)r.catch(()=>toast('Il browser non permette lo schermo intero qui'))}}
+  catch(e){toast('Il browser non permette lo schermo intero qui')}
+  if(menu==='tools')chiudiMenu()}
+function fsUI(){const on=FS.on();$('bFull').setAttribute('aria-pressed',on);$('bFull').innerHTML=on?'⛶<span class="fsTxt"> Esci da schermo intero</span>':'⛶<span class="fsTxt"> Schermo intero</span>';$('bFull').setAttribute('aria-label',on?'Esci da schermo intero':'Schermo intero');$('bFull').title=(on?'Esci da schermo intero':'Schermo intero')+' (tasto F)';setTimeout(()=>{try{resize()}catch(e){}},120)}
+if(FS.ok()){$('bFull').hidden=false;$('bFull').onclick=fsCambia;document.addEventListener('fullscreenchange',fsUI);document.addEventListener('webkitfullscreenchange',fsUI)}
+addEventListener('keydown',e=>{if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&FS.ok()&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))fsCambia()});
 </script>
