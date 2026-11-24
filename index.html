@@ -2437,6 +2437,7 @@ function select(id,keep){
     <div class="kind">${o.tipo}</div><h2>${o.nome}</h2>${o.alias?`<div class="hint">${o.alias}</div>`:''}${o.kind!=='evento'&&o.kind!=='paesaggio'&&o.kind!=='sole'&&o.kind!=='cometa'?`<button class="wiki ocuB" data-ocu="${o.id}">Come appare all'oculare</button> `:''}${wikiUrl(o)?`<a class="wiki" href="${wikiUrl(o)}" target="_blank" rel="noopener">Wikipedia ↗</a>`:''}${o._sigle&&o._sigle.length?`<div class="sigle" aria-label="Nei cataloghi">${o._sigle.map(g=>`<button data-cat="${catDi(g)}" title="Catalogo ${CATALOGHI[catDi(g)].nome}">${g}</button>`).join('')}</div>`:''}
     <dl class="facts" id="pFacts"></dl>
     ${o.kind==='evento'?'':`<div class="ctrls">${o.kind!=='paesaggio'?'<button id="pTransit">Porta il cielo al transito</button>':''}<button id="pCenter">${o.kind==='paesaggio'?"Guarda verso l'Elba":'Centra'}</button></div>`}
+    ${o._sn?`<p class="hint">Supernova fotografata qui: ${o._sn.map(([n,i])=>`<b>${n}</b> (${i})`).join(', ')}</p>`:''}
     ${o.foto.length?`<button class="pConfronta" id="pConfronta">${o.foto.length>1?'Confronta le foto ('+o.foto.length+')':'Foto in grande'}</button>`:''}
     <h3>Su Astroimmagini · ${fotos.length} ${fotos.length===1?'articolo':'articoli'}</h3>${fotos.some(f=>f.fonte==='storico')&&fotos.some(f=>f.fonte!=='storico')?'<p class="legenda"><span class="src-nuovo">■ sito attuale</span> <span class="src-storico">■ sito storico</span></p>':''}
     ${fotos.length?'':`<p class="hint">${o.foto.length?'Nessun articolo pubblicato entro questa data.':'Nessun articolo ancora nell\'archivio.'}</p>`}
@@ -2515,6 +2516,10 @@ const ultima=o=>o.foto.reduce((m,f)=>f.data>m?f.data:m,'');
 const fmtBreve=iso=>iso?new Date(iso+'T12:00:00').toLocaleDateString('it-IT',{month:'short',year:'numeric'}):'';
 for(const o of OGGETTI)o._nomeN=norma([o.id,o.nome,o.alias].join(' '));
 for(const o of OGGETTI){o._sigle=sigleDi(o);o._cerca=norma([o.id,o.nome,o.alias,o.tipo,o.cost,...o._sigle.map(g=>' '+g+' '+(CATALOGHI[catDi(g)]||{}).nome),...o.foto.map(f=>f.titolo)].join(' '));o._nomeN+=norma(o._sigle.join(' '))}
+/* supernove fotografate dai soci, con la sigla ufficiale (TNS), legate alla galassia che le ospita: si trovano cercando «SN 2023ixf», «2023ixf» o «supernova» */
+const SUPERNOVE=[['SN 2020jfo','M61','tipo II, scoperta a maggio 2020'],['SN 2023ixf','M101','tipo II, scoperta a maggio 2023'],['SN 2026fvx','N4205','aprile 2026'],['SN 2026kid','N5907','aprile 2026'],['SN 2026aaiv','N7331','tipo Ia, scoperta il 1° settembre 2026']];
+for(const [n,id,info] of SUPERNOVE){const o=OGGETTI.find(x=>x.id===id);if(!o)continue;(o._sn=o._sn||[]).push([n,info]);o._cerca+=norma(n+' supernova');o._nomeN+=norma(n)}
+const snTag=(o,q)=>{if(!q||!o._sn)return '';const t=o._sn.filter(([n])=>norma(n).includes(q)||'supernova'.includes(q)&&q.length>3);return t.length?`<span class="sig">${t.map(x=>x[0]).join(' · ')}</span>`:''};
 const giornoDi=iso=>{const [y,m,d]=iso.split('-').map(Number);return Math.max(0,Math.min(DAYS,Math.round((Date.UTC(y,m-1,d)-Date.UTC(E0[0],E0[1]-1,E0[2]))/864e5)))};
 /* va all'oggetto: se alla data scelta non c'è (o non è ancora stato fotografato) salta alla sua foto più recente */
 function vaiA(o){if(!o)return;if(!o.foto.some(fin))state.dayA=0;const oggi=isoDay(),ha=o.foto.some(f=>f.data<=oggi);
@@ -2551,7 +2556,7 @@ function fillList(){
   const rows=OGGETTI.filter(o=>o.foto.some(strOk)&&acceso(o)&&(!q||o._cerca.includes(q))&&(!cat||sig(o).length)).map(o=>{const fs=o.foto.filter(fin);return [o,fs.length?fs:o.foto.filter(strOk),!fs.length]}).sort((a,b)=>cat?numDi(sig(a[0])[0])-numDi(sig(b[0])[0]):(q?(b[0]._nomeN.includes(q)-a[0]._nomeN.includes(q)):0)||ultima(b[0]).localeCompare(ultima(a[0])));
   const html=rows.map(([o,fs,fut])=>{const al=o.kind==='paesaggio'||!visibile(o)?null:altaz(vecOf(o))[1];let cls={dso:'',stella:'st',pianeta:'pl',luna:'lu',sole:'so',paesaggio:'pa'}[o.kind];if(o.kind==='dso'||o.kind==='stella'){const v=fs.some(f=>f.fonte==='storico'),n=fs.some(f=>f.fonte!=='storico');cls+=v&&n?' mix':v?' old':''}
     const dove=o.kind==='paesaggio'?'Elba':al==null?fmtBreve(ultima(o)):al>0?al.toFixed(0)+'°':'giù';
-    return `<li><button data-id="${o.id}" class="${fut?'futuro':''}"><span><span class="sw ${cls}" style="margin-right:8px${!LAY.colSito&&(o.kind==='dso'||o.kind==='stella')?';border-color:'+coloreTipo(o):''}"></span>${cat?sig(o).join(' · ')+`<span class="sig">${o.nome.replace(/ · .*/,'')!==sig(o)[0]?o.nome:(o.alias||'')}</span>`:o.nome}</span><span class="alt ${al>0?'up':''}">${dove} · ${fs.length}</span></button></li>`}).join('')||'<li class="hint" style="padding:.5rem">Nessun oggetto trovato.</li>';
+    return `<li><button data-id="${o.id}" class="${fut?'futuro':''}"><span><span class="sw ${cls}" style="margin-right:8px${!LAY.colSito&&(o.kind==='dso'||o.kind==='stella')?';border-color:'+coloreTipo(o):''}"></span>${cat?sig(o).join(' · ')+`<span class="sig">${o.nome.replace(/ · .*/,'')!==sig(o)[0]?o.nome:(o.alias||'')}</span>`:o.nome+snTag(o,q)}</span><span class="alt ${al>0?'up':''}">${dove} · ${fs.length}</span></button></li>`}).join('')||'<li class="hint" style="padding:.5rem">Nessun oggetto trovato.</li>';
   if(html===fillList.last)return; fillList.last=html; ul.innerHTML=html;
   ul.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(innerWidth<900)chiudiMenu();vaiA(OGGETTI.find(o=>o.id===b.dataset.id))});
 }
@@ -3176,7 +3181,7 @@ function tlVoci(){if(TL.voci)return TL.voci;const byId=Object.fromEntries(OGGETT
     const str=(STRUM[p[2]]||[]);
     return {k,data:p[0],anno:p[0].slice(0,4),titolo:p[1],slug:p[2],url,fonte,ecl:p[4],og,pos,v0,cost,costId,str,img:imgDi(url,og[0].id),
       rip:rip&&rip.txt,
-      tipi:[...new Set(og.map(tlTipo))],cerca:tlNorm([p[1],...og.map(o=>[o.nome,o.alias,o.tipo,o.cost].join(' '))].join(' ')).normalize('NFD').replace(/[̀-ͯ]/g,'')}}).filter(Boolean);
+      tipi:[...new Set(og.map(tlTipo))],cerca:tlNorm([p[1],...og.map(o=>[o.nome,o.alias,o.tipo,o.cost,...(o._sn||[]).map(x=>x[0]+' '+x[0].replace(' ',''))].join(' '))].join(' ')).normalize('NFD').replace(/[̀-ͯ]/g,'')}}).filter(Boolean);
   return TL.voci}
 const TL_NOMESTR=Object.fromEntries(STRUMENTI.flatMap(g=>g[1]));
 function tlFiltri(){const V=tlVoci(),cnt=(f)=>V.filter(f).length;
