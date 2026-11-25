@@ -294,6 +294,24 @@ table.sesMet td.ok{background:rgba(70,160,90,.28)} table.sesMet td.mah{backgroun
 #sesOgg i{color:#f3d9a8;font-style:normal;font-size:.7rem;border:1px solid #8a6a30;border-radius:6px;padding:0 4px}
 .sesNum{text-align:right;min-width:9ch}
 #sesSeq li,#sesSalvate li{padding:.3rem 0;font-size:.86rem;border-bottom:1px solid #24211d}
+.sesSvg{width:100%;min-width:640px;display:block}
+.sesSvg text{font:500 11px var(--f-ui);fill:#cfcdc8}
+.sesSvg .sesAx{fill:#a9a59c;text-anchor:middle;font-size:10px}.sesSvg .sesLane{font-weight:700;font-size:12px}
+.sesSvg .sesBarT{fill:#121110;font-weight:600;font-size:10.5px}.sesSvg .sesVuoto{fill:#77736b;font-style:italic}
+#sesPiano{margin-top:4px}
+.sesStr h4{margin:0 0 6px;font:600 .95rem var(--f-display)}
+.sesCard{border:1px solid #2c2924;border-left:4px solid;border-radius:10px;padding:8px 10px;margin:0 0 10px;background:#17150f}
+.sesCardTop{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sesCardTop .sesOre{color:#a9a59c;font-size:.78rem}.sesBtns{margin-left:auto;display:flex;gap:4px}
+.sesMu{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:.78rem;color:#a9a59c;margin:6px 0}.sesMu a{color:#f3d9a8}
+#ses table.sesRighe,#ses table.sesTot{border-collapse:collapse;font-size:.78rem;margin:4px 0;width:100%}
+#ses table.sesRighe th,#ses table.sesTot th{color:#a9a59c;font-weight:500;text-align:left;padding:2px 4px}
+#ses table.sesRighe td,#ses table.sesTot td{padding:2px 4px;border-top:1px solid #24211d}
+#ses table.sesRighe input,#ses table.sesRighe select{padding:.2rem .3rem;font-size:.8rem}
+.sesBar{display:inline-block;width:60px;height:6px;background:#2c2924;border-radius:3px;overflow:hidden;vertical-align:middle}.sesBar i{display:block;height:100%}
+.sesOk{color:#7fd18b;font-weight:600}
+.sesAdd2{display:flex;gap:6px;margin:4px 0}.sesAdd2 input{flex:1}
+.sesSugg{font-size:.75rem;color:#a9a59c;display:flex;flex-wrap:wrap;gap:4px;align-items:center}.sesSugg small{color:#a9a59c}
+.sesFattaL{display:flex;gap:6px;align-items:center;font-size:.85rem}
 #ses .sesCol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media (max-width:720px){#ses .sesCol{grid-template-columns:1fr}#sesOgg li{grid-template-columns:auto 1fr auto}#sesOgg li .sesNum:nth-child(3){display:none}}
 #vis{position:fixed;inset:0;z-index:74;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -472,22 +490,29 @@ table.sesMet td.ok{background:rgba(70,160,90,.28)} table.sesMet td.mah{backgroun
     <h2>Pianifica una serata di astrofotografia</h2>
     <div class="sesRiga">
       <label class="sesCampo">Notte del<input type="date" id="sesData"></label>
-      <label class="sesCampo">Strumento<select id="sesStrum"><option value="TDIG">TDIG · RC 360 + Zeus 455M</option><option value="GSO">GSO RC8 + ASI2600MC</option></select></label>
-      <label class="sesCampo">Filtro<select id="sesFil"></select></label>
+      <label class="sesCampo">Inizio (vuoto = buio)<input type="time" id="sesInizio"></label>
+      <label class="sesCampo">Tempo morto per posa (s)<input id="sesMorto" inputmode="decimal" size="4"></label>
+      <label class="sesCampo">Pose da scartare (%)<input id="sesScarto" inputmode="numeric" size="4"></label>
+      <label class="sesCampo">Cielo senza Luna (mag/″²)<input id="sesSqm" inputmode="decimal" size="5"></label>
+      <label class="sesCampo">Qualità voluta (SNR)<input id="sesSnr" inputmode="numeric" size="4"></label>
     </div>
     <p id="sesNotte"></p>
     <h3>Meteo della notte, ora per ora</h3>
     <div class="sesScroll" id="sesMeteoTab"></div>
     <p class="sesLink"><a href="https://www.meteoblue.com/it/tempo/outdoorsports/seeing/piombino_italia_3170674" target="_blank" rel="noopener">Seeing di meteoblue ↗</a><a href="https://www.meteoeradar.it/radar-meteo/piombino/1485525?center=42.9,10.56&amp;zoom=8" target="_blank" rel="noopener">Nuvole e radar di meteoeradar ↗</a></p>
-    <h3>Oggetti migliori per questa notte · tocca «＋ aggiungi» per metterli nella serata</h3>
-    <div class="sesRiga"><label class="sesCampo">Cerca<input id="sesCerca" placeholder="M33, nebulosa, NGC…"></label></div>
-    <p class="sesNota">Ore sopra 30° durante il buio, ora in cui l'oggetto è più alto e ore di posa per SNR 10 sulle parti esterne (2 mag/″² sotto la media), con lo strumento e il filtro scelti e il cielo di quella notte (SQM 20,15 più la Luna). Le ore sono indicative.</p>
-    <ul id="sesOgg"></ul>
+    <h3>Linea del tempo</h3>
+    <div class="sesScroll" id="sesTempo"></div>
+    <h3>Sequenza per strumento</h3>
+    <datalist id="sesLista"></datalist>
+    <div id="sesPiano" class="sesCol"></div>
+    <p class="sesNota">Servono: ore di posa utile per arrivare alla qualità voluta (SNR, di base 20) sulle parti esterne dell'oggetto (1,5 mag/″² sotto la μ media), con il cielo e la Luna di quella notte. μ è già compilata dal catalogo: se trovi un valore migliore incollalo (va bene anche in mag/′², per esempio 14,2: lo converto io). Prima: ore utili delle serate già segnate come fatte. Le pose scartate tolgono la loro quota.</p>
+    <div class="sesRiga" style="margin-top:10px"><label class="sesCampo">Il tuo nickname<input id="sesNick" maxlength="30"></label>
+      <label class="sesFattaL"><input type="checkbox" id="sesFatta"> Serata fatta: conta nelle ore</label>
+      <button class="mini" id="sesSalva">Salva la serata</button><button class="mini" id="sesScarica">Scarica file</button><button class="mini" id="sesNuova">Nuova serata</button></div>
+    <p class="sesNota" id="sesStato"></p>
     <div class="sesCol">
-      <div><h3>Sequenza della serata</h3><ul id="sesSeq"></ul>
-        <div class="sesRiga" style="margin-top:8px"><label class="sesCampo">Il tuo nickname<input id="sesNick" maxlength="30"></label><button class="mini" id="sesSalva">Salva la serata</button><button class="mini" id="sesScarica">Scarica file</button></div>
-        <p class="sesNota" id="sesStato"></p></div>
-      <div><h3>Serate già salvate per questa data</h3><ul id="sesSalvate"></ul></div>
+      <div><h3>Serate salvate per questa data</h3><ul id="sesSalvate"></ul></div>
+      <div><h3>Progetti: ore utili accumulate</h3><div id="sesProgetti"></div></div>
     </div>
   </div>
 </div>
@@ -3479,7 +3504,7 @@ const SNR=(()=>{const TAU=.85,RAY=1.870e-6,DL=.5,GRID=[];for(let l=395;l<=705;l+
   /* ore di posa (di orologio) per SNR 10 su un'area di 2″×2″ della parte debole dell'oggetto.
      o={mu} per il continuo, oppure {ha,o3,s2} in rayleigh per le nebulose a emissione */
   function ore(k,fk,o,sky,op={}){const s=STR[k],c=ch(k,fk),A=Math.PI/4*s.D*s.D*(1-s.eps*s.eps)*TAU,ps=206.265*s.p/s.f;
-    const tsub=op.tsub||(FIL[s.kind][fk][4]?300:180),oh=4,T=10,nmin=10,good=.75,dark=.0007,om=4;
+    const tsub=op.tsub||(FIL[s.kind][fk][4]?300:180),oh=op.oh??4,T=op.T??10,nmin=op.nmin??10,good=op.good??.75,dark=.0007,om=4;
     const sb=o.ha!=null?A*RAY*(o.ha*c.line.Ha+o.o3*c.line.OIII+o.s2*c.line.SII):A*c.cont*10**(-.4*o.mu);
     const S=sb*om,B=A*c.cont*10**(-.4*sky)*om,npx=om/ps/ps*c.pix;if(!(S>0))return Infinity;
     return Math.max(T*T*(S+B+npx*(dark+s.rn**2/tsub))/S/S*(tsub+oh)/tsub/3600,nmin*(tsub+oh)/3600)/good}
@@ -3490,7 +3515,6 @@ const SES={strum:'TDIG',fil:'L',data:null,notte:null,meteo:null,nuvole:null,sel:
 try{Object.assign(SES,JSON.parse(localStorage.getItem('pf-serata')||'{}'))}catch(e){}
 const SES_REPO='jacklions05/cielo-punta-falcone-sessioni';
 const sesTk=()=>['kXBx1anzHUQJJ2GDWwDY','C2YPkMzFo8sPBaNQnBl9sD2ikaY0yfID2H0yiQ9_','9FPrlTpdq8O90QGK7UQB11_tap_buhtig'].join('').split('').reverse().join('');
-const sesSalvaPref=()=>{try{localStorage.setItem('pf-serata',JSON.stringify({strum:SES.strum,fil:SES.fil,nick:SES.nick}))}catch(e){}};
 const sesOra=t=>{const p=romeParts(t);return String(p.hour).padStart(2,'0')+':'+String(p.minute).padStart(2,'0')};
 const sesIso=(y,m,d)=>y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 const sesAlt=(rd,t)=>{const H=(sidereal(t)-rd[0])*D2R,d=rd[1]*D2R;return Math.asin(Math.max(-1,Math.min(1,sinPhi*Math.sin(d)+cosPhi*Math.cos(d)*Math.cos(H))))*R2D};
@@ -3521,36 +3545,6 @@ function sesOraMeteo(t){const M=SES.meteo;if(!M)return null;const p=romeParts(t)
     u:H.relative_humidity_2m[i],w:H.wind_speed_10m[i]*3.6,g:H.wind_gusts_10m[i]*3.6,pp:H.precipitation_probability[i],see:s.see,jet:s.jet*3.6}}
 const sesVoto=m=>!m?null:m.nub>60||m.pp>40?0:m.nub>25||m.g>45||m.see>3.2?1:2;
 
-/* oggetti: brillanza superficiale dalla magnitudine e dagli assi (OpenNGC); le nebulose a emissione in rayleigh, stima grezza */
-const SES_EM=/^(HII|Neb|EmN|PN|SNR|Cl\+N)$/;
-function sesOggetto(o){const d=OCU_DATI[o.id]||OCU_DATI[o.id.replace(/[XR]$/,'')];if(!d||d[0]==null)return null;
-  const a=d[1]||1,b=d[2]||a,mu=d[0]+2.5*Math.log10(Math.PI/4*a*b*3600)+2,em=SES_EM.test(d[5]||'');
-  const R=em?1e4*90*10**(-.4*mu)/1.87e-6/0.6:0;return {a,b,mu,em,ha:R*.5,o3:R*(d[5]==='PN'?.6:.25),s2:R*.15}}
-function sesCandidati(){const N=SES.notte;if(!N||!N.buio.length)return [];const fov=SNR.fov(SES.strum),out=[];
-  for(const o of OGGETTI){if(o.kind!=='dso'||o.ra==null)continue;const rd=[o.ra,o.dec];let ok=0,best=null;
-    for(const x of N.buio){const a=sesAlt(rd,x.t);if(a>=30)ok++;if(!best||a>best.a)best={t:x.t,a,x}}
-    if(!ok)continue;const ob=sesOggetto(o),x=best.x,sep=sesSep(rd,x.lunaRD),M=sesOraMeteo(best.t);
-    const sky=SNR.cielo(20.15,x.illum,x.luna,sep,best.a);let h=Infinity;
-    if(ob)h=SNR.ore(SES.strum,SES.fil,ob.em&&/Ha|OIII|SII|DHA|DOIII/.test(SES.fil)?ob:{mu:ob.mu},sky);
-    out.push({o,ok:ok/6,best,sep,sky,h,ob,entra:!ob||ob.a<=fov[0]*1.1,nub:M?M.nub:null})}
-  return out.sort((a,b)=>b.ok-a.ok||a.h-b.h)}
-
-/* sequenza: ogni 10 minuti di buio va all'oggetto scelto più alto (sopra 30°), poi i pezzi uguali si uniscono */
-function sesSequenza(){const N=SES.notte,sel=SES.sel.map(id=>OGGETTI.find(o=>o.id===id)).filter(Boolean),bl=[];if(!N||!sel.length)return bl;
-  for(const x of N.buio){let b=null,ba=30;for(const o of sel){const a=sesAlt([o.ra,o.dec],x.t);if(a>=ba){ba=a;b=o}}
-    const id=b?b.id:null,l=bl[bl.length-1];if(l&&l.id===id)l.a=x.t+600e3;else bl.push({id,nome:b?b.nome:'—',da:x.t,a:x.t+600e3})}
-  return bl.filter(b=>b.id)}
-
-/* ---------- interfaccia ---------- */
-function sesApri(on){$('ses').hidden=!on;if(!on)return;if(menu)chiudiMenu();conta('serata/apre','Apre «Pianifica una serata»');
-  if(!SES.data){const p=romeParts(Date.now()),g=p.hour<9?new Date(Date.UTC(p.year,p.month-1,p.day)-864e5):new Date(Date.UTC(p.year,p.month-1,p.day));SES.data=g.toISOString().slice(0,10)}
-  $('sesData').value=SES.data;$('sesNick').value=SES.nick||'';sesStrumUI();sesAggiorna()}
-function sesStrumUI(){$('sesStrum').value=SES.strum;const F=SNR.filtri(SES.strum);if(!F.some(f=>f[0]===SES.fil))SES.fil=F[0][0];
-  $('sesFil').innerHTML=F.map(([k,n])=>`<option value="${k}">${n}</option>`).join('');$('sesFil').value=SES.fil}
-async function sesAggiorna(){SES.notte=sesNotte(SES.data);sesDisegnaNotte();sesDisegnaOggetti();sesDisegnaSeq();sesCaricaSalvate();
-  $('sesMeteoTab').innerHTML='<p class="sesNota">Scarico le previsioni…</p>';
-  try{await sesMeteo();sesDisegnaMeteo();sesDisegnaOggetti()}catch(e){$('sesMeteoTab').innerHTML='<p class="sesNota">Previsioni non raggiungibili in questo momento.</p>'}
-}
 function sesDisegnaNotte(){const N=SES.notte,L=N.T.filter(x=>x.luna>0&&(x.buio)),mid=N.buio[Math.floor(N.buio.length/2)]||N.T[30];
   $('sesNotte').innerHTML=N.ini?`<b>Buio astronomico</b> dalle ${sesOra(N.ini)} alle ${sesOra(N.fine+600e3)} · <b>Luna</b> ${Math.round(mid.illum*100)}% illuminata, ${L.length?`sopra l'orizzonte nel buio dalle ${sesOra(L[0].t)} alle ${sesOra(L[L.length-1].t+600e3)}`:'sotto l\'orizzonte per tutto il buio'}`:'Quella notte non c\'è buio astronomico.'}
 function sesDisegnaMeteo(){const N=SES.notte,M=SES.meteo;if(!N.ini){$('sesMeteoTab').innerHTML='';return}
@@ -3563,40 +3557,150 @@ function sesDisegnaMeteo(){const N=SES.notte,M=SES.meteo;if(!N.ini){$('sesMeteoT
     ['Temperatura °C',r=>cel(r.T-r.Td<2?'mah':'',`${Math.round(r.T)}${r.T-r.Td<2?'<small>condensa</small>':''}`)],['Seeing ″',r=>cel(c(r.see,1.8,2.6),r.see.toFixed(1).replace('.',','))]];
   $('sesMeteoTab').innerHTML=`<table class="sesMet"><tr><th></th>${R.map(([t])=>`<th>${romeParts(t).hour}</th>`).join('')}</tr>`+righe.map(([n,f])=>`<tr><th>${n}</th>${R.map(([,r])=>f(r)).join('')}</tr>`).join('')+'</table>'+
     `<p class="sesNota">Previsioni Open-Meteo per la notte scelta (fino a 16 giorni avanti; oltre 3–4 giorni sono indicative). Sotto le nuvole totali: basse · medie · alte. Il seeing è una stima dai venti in quota: per il valore di meteoblue usa il link sopra.</p>`}
-function sesDisegnaOggetti(){const q=norma($('sesCerca').value||''),C=sesCandidati().filter(c=>!q||c.o._cerca.includes(q)).slice(0,60);
-  $('sesOgg').innerHTML=C.length?C.map(c=>{const on=SES.sel.includes(c.o.id);return `<li class="${on?'scelto':''}"><button class="sesAdd" data-id="${c.o.id}">${on?'✓ in serata':'＋ aggiungi'}</button><span><b>${c.o.nome}</b>${c.o.dafare?' <i>da fare</i>':''}<small>${c.o.tipo||''}${c.entra?'':' · non entra nel campo'}</small></span>
-     <span class="sesNum">${sesFmtH(c.ok)} sopra 30°<small>più alto alle ${sesOra(c.best.t)} · ${Math.round(c.best.a)}°</small></span>
-     <span class="sesNum">${sesFmtH(c.h)}<small>Luna a ${Math.round(c.sep)}° · cielo ${c.sky.toFixed(1).replace('.',',')}</small></span></li>`}).join(''):'<li class="sesNota">Nessun oggetto sopra 30° nel buio.</li>';
-  $('sesOgg').querySelectorAll('.sesAdd').forEach(b=>b.onclick=()=>{const id=b.dataset.id;SES.sel=SES.sel.includes(id)?SES.sel.filter(x=>x!==id):[...SES.sel,id];sesDisegnaOggetti();sesDisegnaSeq()})}
-function sesDisegnaSeq(){const B=sesSequenza();$('sesSeq').innerHTML=B.length?B.map(b=>`<li><b>${sesOra(b.da)}–${sesOra(b.a)}</b> ${b.nome} <small>${sesFmtH((b.a-b.da)/3600e3)}</small></li>`).join(''):
-  '<li class="sesNota">Tocca «＋ aggiungi» accanto agli oggetti che vuoi fare: qui compaiono in fila, ognuno nelle ore in cui è più alto.</li>';$('sesSalva').disabled=!B.length}
+/* ---------- piano della serata, come una sequenza di NINA: per ogni strumento una fila di oggetti, ognuno con righe filtro · posa · numero ---------- */
+const SES_K=['TDIG','GSO'],SES_COL={TDIG:'#f0a04b',GSO:'#4fc1d6'};
+SES.piano=SES.piano&&SES.piano.TDIG?SES.piano:{TDIG:[],GSO:[]};SES.opz=Object.assign({morto:2,scarto:20,sqm:20.15,snr:20},SES.opz||{});SES.file=null;SES.fatta=false;SES.tutte=[];
+const sesEsc=x=>String(x??'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'})[c]);
+const sesNum=(v,d=1)=>(Math.round(v*10**d)/10**d+'').replace('.',',');
+/* brillanza superficiale media dall'OpenNGC (magnitudine e assi); chi vuole incolla quella di un sito.
+   Un valore sotto 18 è in mag/′² (come su deepskycorner) e diventa mag/″² aggiungendo 8,89 */
+function sesMuDef(id){const d=OCU_DATI[id]||OCU_DATI[(id||'').replace(/[XR]$/,'')];if(!d||d[0]==null)return null;const a=d[1]||1,b=d[2]||a;return Math.round((d[0]+2.5*Math.log10(Math.PI/4*a*b*3600))*10)/10}
+const sesMuNorm=v=>v>0&&v<18?v+8.89:v;
+const sesTipo=id=>{const d=OCU_DATI[id]||OCU_DATI[(id||'').replace(/[XR]$/,'')];return d?d[5]||'':''};
+function sesBlocchi(k){const N=SES.notte;if(!N||!N.ini)return [];let t=N.ini;if(SES.opz.inizio){const [h,m]=SES.opz.inizio.split(':').map(Number),p=romeParts(N.ini);let x=romeToUTC(p.year,p.month-1,p.day,h,m);if(h<12)x+=86400e3;t=x}
+  return SES.piano[k].map(it=>{const sec=it.righe.reduce((s,r)=>s+(+r.n||0)*((+r.t||0)+(+SES.opz.morto||0)),0),b={it,da:t,a:t+sec*1000};t=b.a;return b})}
+/* fondo cielo per quell'oggetto a metà del suo blocco: SQM del sito più la Luna di quella notte (Krisciunas-Schaefer) */
+function sesCieloA(o,t){const s=sunRaDec(t),mo=moonRaDec(t),il=(1-Math.cos(sesSep(s,mo)*D2R))/2,rd=[o.ra,o.dec];
+  return {sky:SNR.cielo(+SES.opz.sqm||20.15,il,sesAlt(mo,t),sesSep(rd,mo),sesAlt(rd,t)),alt:sesAlt(rd,t),luna:Math.round(il*100)}}
+/* ore di posa utile che servono per SNR 10 su 2″×2″ delle parti esterne (1,5 mag/″² sotto la media); i filtri stretti sulle nebulose a emissione con una stima in rayleigh */
+function sesServe(k,it,f,t){const o=OGGETTI.find(x=>x.id===it.id),mu=sesMuNorm(+String(it.mu).replace(',','.'));if(!o||!(mu>10))return NaN;
+  const c=sesCieloA(o,t),m=mu+1.5,em=/^(HII|Neb|EmN|PN|SNR|Cl\+N)$/.test(sesTipo(it.id))&&/Ha|OIII|SII|DHA|DOIII/.test(f);
+  const R=1e4*90*10**(-.4*m)/1.87e-6/.6,ob=em?{ha:R*.5,o3:R*(sesTipo(it.id)==='PN'?.6:.25),s2:R*.15}:{mu:m};
+  return SNR.ore(k,f,ob,c.sky,{tsub:180,oh:0,good:1,nmin:1,T:+SES.opz.snr||20})}
+/* ore utili già fatte nelle serate salvate e segnate come fatte (tranne quella aperta) */
+function sesFatte(k,id,f){let h=0;for(const x of SES.tutte){if(!x.f||x.f.fatta!==true||(SES.file&&x.path===SES.file.path))continue;const sc=(+x.f.scarto||0)/100;
+  for(const it of (x.f.piano&&x.f.piano[k])||[])if(it.id===id)for(const r of it.righe||[])if(r.f===f)h+=(+r.n||0)*(+r.t||0)*(1-sc)/3600}return h}
 
-/* salvataggio: un file JSON per serata nel repository delle sessioni; la lettura è pubblica, la scrittura usa il token limitato a quel repository */
-function sesFile(){const B=sesSequenza();return {tipo:'serata',versione:1,data:SES.data,nickname:SES.nick.trim(),strumento:SES.strum,filtro:SES.fil,
-  oggetti:B.map(b=>({id:b.id,nome:b.nome,da:sesOra(b.da),a:sesOra(b.a)})),creato:new Date().toISOString()}}
+/* linea del tempo: per ogni strumento una fila di barre a cascata, dietro a ogni barra la curva d'altezza dell'oggetto */
+function sesDisegnaTempo(){const N=SES.notte,box=$('sesTempo');if(!N||!N.ini){box.innerHTML='<p class="sesNota">Quella notte non c\'è buio astronomico.</p>';return}
+  const B={};SES_K.forEach(k=>B[k]=sesBlocchi(k));let t0=N.ini-5400e3,t1=N.fine+5400e3;
+  SES_K.forEach(k=>B[k].forEach(b=>{t1=Math.max(t1,b.a+1800e3)}));
+  const W=1000,L=150,X=t=>L+(t-t0)/(t1-t0)*(W-L-10),RH=34,rows=[];
+  SES_K.forEach(k=>{rows.push({k,head:true});(B[k].length?B[k]:[null]).forEach(b=>rows.push({k,b}))});
+  const H=26+rows.length*RH+6;let g=`<svg viewBox="0 0 ${W} ${H}" class="sesSvg" role="img" aria-label="Linea del tempo della serata">`;
+  for(const x of N.T){if(x.t<t0||x.t>t1)continue;const c=x.sole>0?'#3a3326':x.sole>-18?'#221f1a':null;if(c)g+=`<rect x="${X(x.t)}" y="22" width="${X(x.t+600e3)-X(x.t)+.5}" height="${H-22}" fill="${c}"/>`}
+  for(let t=Math.ceil(t0/3600e3)*3600e3;t<=t1;t+=3600e3){const x=X(t);g+=`<line x1="${x}" y1="18" x2="${x}" y2="${H}" stroke="#2c2924"/><text x="${x}" y="13" class="sesAx">${romeParts(t).hour}</text>`}
+  rows.forEach((r,i)=>{const y=26+i*RH;
+    if(r.head){g+=`<text x="6" y="${y+21}" class="sesLane" fill="${SES_COL[r.k]}">${r.k==='TDIG'?'TDIG · Zeus':'GSO · 2600MC'}</text><line x1="0" y1="${y+RH-2}" x2="${W}" y2="${y+RH-2}" stroke="#3a362f"/>`;return}
+    if(!r.b){g+=`<text x="${L}" y="${y+21}" class="sesVuoto">nessun oggetto: aggiungilo qui sotto</text>`;return}
+    const it=r.b.it,o=OGGETTI.find(x=>x.id===it.id);
+    if(o){let p='';for(let t=t0;t<=t1;t+=600e3){const a=Math.max(0,sesAlt([o.ra,o.dec],t));p+=(p?'L':'M')+X(t).toFixed(1)+','+(y+RH-4-a/90*(RH-8)).toFixed(1)}
+      g+=`<path d="${p}L${X(t1)},${y+RH-4}L${X(t0)},${y+RH-4}Z" fill="${SES_COL[r.k]}" fill-opacity=".10" stroke="${SES_COL[r.k]}" stroke-opacity=".45" stroke-width="1"/>`;
+      const y30=y+RH-4-30/90*(RH-8);g+=`<line x1="${L}" y1="${y30}" x2="${W}" y2="${y30}" stroke="#777" stroke-dasharray="2 4" stroke-width=".6"/>`}
+    const oltre=r.b.a>N.fine+600e3,bx=X(r.b.da),bw=Math.max(3,X(r.b.a)-bx);
+    g+=`<text x="6" y="${y+21}" class="sesNomeR">${sesEsc(it.nome)}</text><rect x="${bx}" y="${y+7}" width="${bw}" height="${RH-14}" rx="5" fill="${SES_COL[r.k]}" fill-opacity=".85" ${oltre?'stroke="#ff6b5a" stroke-width="2"':''}/>`;
+    g+=`<text x="${bx+5}" y="${y+22}" class="sesBarT">${sesOra(r.b.da)}–${sesOra(r.b.a)} · ${sesFmtH((r.b.a-r.b.da)/3600e3)}${oltre?' · oltre l\'alba':''}</text>`});
+  box.innerHTML=g+'</svg><p class="sesNota">Barre: quanto dura ogni oggetto, uno dopo l\'altro, tempi morti compresi. Dietro ogni barra la curva d\'altezza dell\'oggetto (linea tratteggiata: 30°). Fondo grigio: crepuscolo; il buio è la parte scura.</p>'}
+
+/* schede degli oggetti, una colonna per strumento */
+function sesDisegnaPiano(){const N=SES.notte;
+  $('sesPiano').innerHTML=SES_K.map(k=>{const B=sesBlocchi(k),F=SNR.filtri(k);
+    return `<div class="sesStr"><h4 style="color:${SES_COL[k]}">${SNR.STR[k].nome}</h4>`+B.map((b,i)=>{const it=b.it,tm=(b.da+b.a)/2,o=OGGETTI.find(x=>x.id===it.id),c=o&&N.ini?sesCieloA(o,tm):null;
+      const fs=[...new Set(it.righe.map(r=>r.f))],sc=(+SES.opz.scarto||0)/100;
+      const riepilogo=fs.map(f=>{const st=it.righe.filter(r=>r.f===f).reduce((s,r)=>s+(+r.n||0)*(+r.t||0),0)*(1-sc)/3600,pr=sesFatte(k,it.id,f),sv=sesServe(k,it,f,tm),tot=pr+st,pc=isFinite(sv)&&sv>0?Math.min(100,tot/sv*100):0;
+        return `<tr><td>${(F.find(x=>x[0]===f)||[f,f])[1]}</td><td>${sesFmtH(pr)}</td><td>${sesFmtH(st)}</td><td><b>${sesFmtH(tot)}</b></td><td>${isFinite(sv)?sesFmtH(sv):'—'}</td><td>${isFinite(sv)?(tot>=sv?'<span class="sesOk">fatto</span>':sesFmtH(sv-tot)):'—'}</td><td><span class="sesBar"><i style="width:${pc}%;background:${SES_COL[k]}"></i></span></td></tr>`}).join('');
+      const q=encodeURIComponent(it.nome+' surface brightness');
+      return `<div class="sesCard" style="border-left-color:${SES_COL[k]}">
+        <div class="sesCardTop"><b>${sesEsc(it.nome)}</b><span class="sesOre">${sesOra(b.da)}–${sesOra(b.a)}</span>
+          <span class="sesBtns"><button class="mini" data-a="su" data-k="${k}" data-i="${i}" aria-label="Sposta prima">↑</button><button class="mini" data-a="giu" data-k="${k}" data-i="${i}" aria-label="Sposta dopo">↓</button><button class="mini" data-a="via" data-k="${k}" data-i="${i}" aria-label="Togli">✕</button></span></div>
+        <div class="sesMu"><label>Brillanza superficiale μ <input data-mu="${k}|${i}" value="${sesEsc(it.mu)}" inputmode="decimal" size="5"> mag/″²</label>
+          <a href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">cerca il valore ↗</a>
+          <small>${c?`alt. ${Math.round(c.alt)}° · Luna ${c.luna}% · cielo ${sesNum(c.sky)} mag/″²`:''}</small></div>
+        <table class="sesRighe"><tr><th>Filtro</th><th>Posa (s)</th><th>Pose</th><th>Durata</th><th></th></tr>${it.righe.map((r,j)=>`<tr>
+          <td><select data-r="${k}|${i}|${j}|f">${F.map(([id,n])=>`<option value="${id}"${id===r.f?' selected':''}>${n}</option>`).join('')}</select></td>
+          <td><input data-r="${k}|${i}|${j}|t" value="${r.t}" inputmode="numeric" size="4"></td><td><input data-r="${k}|${i}|${j}|n" value="${r.n}" inputmode="numeric" size="4"></td>
+          <td>${sesFmtH((+r.n||0)*((+r.t||0)+(+SES.opz.morto||0))/3600)}</td><td><button class="mini" data-a="rvia" data-k="${k}" data-i="${i}" data-j="${j}" aria-label="Togli riga">✕</button></td></tr>`).join('')}</table>
+        <button class="mini" data-a="riga" data-k="${k}" data-i="${i}">＋ riga</button>
+        ${fs.length?`<table class="sesTot"><tr><th>Filtro</th><th>Prima</th><th>Stasera</th><th>Totale</th><th>Servono</th><th>Mancano</th><th></th></tr>${riepilogo}</table>`:''}
+      </div>`}).join('')+
+      `<div class="sesAdd2"><input list="sesLista" placeholder="Aggiungi un oggetto: M33, NGC 7331…" data-add="${k}"><button class="mini" data-a="add" data-k="${k}">＋ aggiungi</button></div>
+      <div class="sesSugg">${sesSuggeriti(k)}</div></div>`}).join('');
+  const P=$('sesPiano');
+  P.querySelectorAll('button[data-a]').forEach(b=>b.onclick=()=>{const k=b.dataset.k,i=+b.dataset.i,L=SES.piano[k];
+    if(b.dataset.a==='su'&&i>0)[L[i-1],L[i]]=[L[i],L[i-1]];else if(b.dataset.a==='giu'&&i<L.length-1)[L[i+1],L[i]]=[L[i],L[i+1]];
+    else if(b.dataset.a==='via')L.splice(i,1);else if(b.dataset.a==='riga'){const u=L[i].righe[L[i].righe.length-1]||{f:SES_DEF[k],t:180,n:20};L[i].righe.push({f:u.f,t:u.t,n:u.n})}
+    else if(b.dataset.a==='rvia')L[i].righe.splice(+b.dataset.j,1);else if(b.dataset.a==='add')return sesAggiungi(k,P.querySelector(`input[data-add="${k}"]`).value);
+    sesRidisegna()});
+  P.querySelectorAll('[data-r]').forEach(e=>e.onchange=()=>{const [k,i,j,c]=e.dataset.r.split('|');SES.piano[k][+i].righe[+j][c]=c==='f'?e.value:Math.max(0,+e.value||0);sesRidisegna()});
+  P.querySelectorAll('[data-mu]').forEach(e=>e.onchange=()=>{const [k,i]=e.dataset.mu.split('|');SES.piano[k][+i].mu=e.value.trim();sesRidisegna()});
+  P.querySelectorAll('input[data-add]').forEach(e=>e.onkeydown=ev=>{if(ev.key==='Enter')sesAggiungi(e.dataset.add,e.value)});
+  P.querySelectorAll('.sesSugg button').forEach(b=>b.onclick=()=>sesAggiungi(b.dataset.k,b.dataset.n))}
+const SES_DEF={TDIG:'L',GSO:'NONE'};
+function sesSuggeriti(k){const N=SES.notte;if(!N||!N.buio.length)return '';const gia=new Set(SES.piano[k].map(x=>x.id)),fov=SNR.fov(k)[0],R=[];
+  for(const o of OGGETTI){if(o.kind!=='dso'||o.ra==null||gia.has(o.id))continue;const d=OCU_DATI[o.id]||OCU_DATI[o.id.replace(/[XR]$/,'')];if(!d||d[0]==null||(d[1]||0)>fov)continue;
+    let ok=0;for(const x of N.buio)if(sesAlt([o.ra,o.dec],x.t)>=30)ok++;if(ok>=24)R.push([o,ok])}
+  R.sort((a,b)=>b[1]-a[1]);return R.length?'Adatti stanotte: '+R.slice(0,10).map(([o,ok])=>`<button class="mini" data-k="${k}" data-n="${sesEsc(o.nome)}">${sesEsc(o.nome)} <small>${sesFmtH(ok/6)}</small></button>`).join(''):''}
+function sesAggiungi(k,nome){const q=norma(nome||'');if(!q)return;const o=OGGETTI.find(x=>x.kind==='dso'&&norma(x.nome)===q)||OGGETTI.find(x=>x.kind==='dso'&&x._cerca&&x._cerca.includes(q));
+  if(!o){toast('Oggetto non trovato nel catalogo della mappa');return}
+  SES.piano[k].push({id:o.id,nome:o.nome,mu:(sesMuDef(o.id)??'')+'',righe:[{f:SES_DEF[k],t:180,n:k==='TDIG'?40:60}]});sesRidisegna()}
+function sesRidisegna(){sesSalvaPref();sesDisegnaTempo();sesDisegnaPiano();sesDisegnaProgetti()}
+
+/* progetti: ore utili accumulate in tutte le serate fatte, per oggetto, strumento e filtro */
+function sesDisegnaProgetti(){const T={};for(const x of SES.tutte){const f=x.f;if(!f||f.fatta!==true||!f.piano)continue;const sc=(+f.scarto||0)/100;
+    for(const k of SES_K)for(const it of f.piano[k]||[])for(const r of it.righe||[]){const key=k+'|'+it.id+'|'+r.f;T[key]=T[key]||{k,nome:it.nome,f:r.f,h:0,n:0};T[key].h+=(+r.n||0)*(+r.t||0)*(1-sc)/3600;T[key].n++}}
+  const L=Object.values(T).sort((a,b)=>a.nome.localeCompare(b.nome)||a.k.localeCompare(b.k));
+  $('sesProgetti').innerHTML=L.length?`<table class="sesTot"><tr><th>Oggetto</th><th>Strumento</th><th>Filtro</th><th>Ore utili</th></tr>${L.map(x=>`<tr><td>${sesEsc(x.nome)}</td><td style="color:${SES_COL[x.k]}">${x.k}</td><td>${(SNR.filtri(x.k).find(z=>z[0]===x.f)||[x.f,x.f])[1]}</td><td><b>${sesFmtH(x.h)}</b></td></tr>`).join('')}</table>`:'<p class="sesNota">Ancora nessuna serata segnata come fatta.</p>'}
+
+/* ---------- interfaccia ---------- */
+function sesApri(on){$('ses').hidden=!on;if(!on)return;if(menu)chiudiMenu();conta('serata/apre','Apre «Pianifica una serata»');
+  if(!SES.data){const p=romeParts(Date.now()),g=p.hour<9?new Date(Date.UTC(p.year,p.month-1,p.day)-864e5):new Date(Date.UTC(p.year,p.month-1,p.day));SES.data=g.toISOString().slice(0,10)}
+  $('sesData').value=SES.data;$('sesNick').value=SES.nick||'';$('sesMorto').value=SES.opz.morto;$('sesScarto').value=SES.opz.scarto;$('sesSqm').value=SES.opz.sqm;$('sesSnr').value=SES.opz.snr;$('sesInizio').value=SES.opz.inizio||'';
+  if(!$('sesLista').options.length)$('sesLista').innerHTML=OGGETTI.filter(o=>o.kind==='dso').map(o=>`<option value="${sesEsc(o.nome)}">`).join('');
+  sesAggiorna();sesCaricaTutte()}
+async function sesAggiorna(){SES.notte=sesNotte(SES.data);sesDisegnaNotte();sesRidisegna();$('sesFatta').checked=SES.fatta;
+  $('sesMeteoTab').innerHTML='<p class="sesNota">Scarico le previsioni…</p>';
+  try{await sesMeteo();sesDisegnaMeteo()}catch(e){$('sesMeteoTab').innerHTML='<p class="sesNota">Previsioni non raggiungibili in questo momento.</p>'}}
+const sesSalvaPref=()=>{try{localStorage.setItem('pf-serata',JSON.stringify({nick:SES.nick,piano:SES.piano,opz:SES.opz}))}catch(e){}};
+
+/* ---------- salvataggio: un file JSON per serata nel repository delle sessioni ---------- */
+const SES_API=`https://api.github.com/repos/${SES_REPO}/contents/`,sesH=()=>({Authorization:'Bearer '+sesTk(),'Content-Type':'application/json'});
+function sesFile(){return {tipo:'serata',versione:2,data:SES.data,nickname:SES.nick.trim(),fatta:SES.fatta,morto:+SES.opz.morto||0,scarto:+SES.opz.scarto||0,sqm:+SES.opz.sqm||20.15,snr:+SES.opz.snr||20,inizio:SES.opz.inizio||'',
+  piano:{TDIG:SES.piano.TDIG.map(x=>({id:x.id,nome:x.nome,mu:x.mu,righe:x.righe.map(r=>({f:r.f,t:+r.t||0,n:+r.n||0}))})),GSO:SES.piano.GSO.map(x=>({id:x.id,nome:x.nome,mu:x.mu,righe:x.righe.map(r=>({f:r.f,t:+r.t||0,n:+r.n||0}))}))},aggiornato:new Date().toISOString()}}
+const sesB64=s=>btoa(unescape(encodeURIComponent(s)));
 async function sesSalva(){const nick=($('sesNick').value||'').trim().replace(/[^\w .àèéìòù-]/gi,'').slice(0,30);if(!nick){toast('Scrivi il tuo nickname');$('sesNick').focus();return}
-  SES.nick=nick;sesSalvaPref();const f=sesFile(),nome=`serate/${f.data}_${nick.replace(/\s+/g,'-')}_${Date.now().toString(36)}.json`;
+  if(!SES.piano.TDIG.length&&!SES.piano.GSO.length){toast('Aggiungi almeno un oggetto');return}
+  SES.nick=nick;sesSalvaPref();const f=sesFile(),path=SES.file?SES.file.path:`serate/${f.data}_${nick.replace(/\s+/g,'-')}_${Date.now().toString(36)}.json`;
   $('sesSalva').disabled=true;$('sesStato').textContent='Salvo…';
-  try{const r=await fetch(`https://api.github.com/repos/${SES_REPO}/contents/${nome}`,{method:'PUT',headers:{Authorization:'Bearer '+sesTk(),'Content-Type':'application/json'},
-      body:JSON.stringify({message:`Serata ${f.data} di ${nick}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(f,null,2))))})});
-    if(!r.ok)throw new Error(r.status);$('sesStato').textContent='Serata salvata.';conta('serata/salva','Serata salvata');setTimeout(sesCaricaSalvate,1500)}
+  try{const body={message:`Serata ${f.data} di ${nick}${f.fatta?' (fatta)':''}`,content:sesB64(JSON.stringify(f,null,2))};if(SES.file)body.sha=SES.file.sha;
+    const r=await fetch(SES_API+path,{method:'PUT',headers:sesH(),body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);const j=await r.json();
+    SES.file={path,sha:j.content.sha};$('sesStato').textContent=f.fatta?'Serata salvata come fatta: le ore entrano nei totali.':'Serata salvata.';conta('serata/salva','Serata salvata');sesCaricaTutte()}
   catch(e){$('sesStato').textContent='Non sono riuscito a salvare ('+e.message+'). Puoi scaricare il file e riprovare più tardi.'}
   $('sesSalva').disabled=false}
 function sesScarica(){const f=sesFile(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(f,null,2)],{type:'application/json'}));a.download=`serata_${f.data}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2e3)}
-async function sesCaricaSalvate(){const box=$('sesSalvate');try{const r=await fetch(`https://api.github.com/repos/${SES_REPO}/contents/serate`);if(r.status===404){box.innerHTML='<li class="sesNota">Ancora nessuna serata salvata.</li>';return}
-    const L=(await r.json()).filter(x=>x.name.startsWith(SES.data));if(!L.length){box.innerHTML='<li class="sesNota">Nessuna serata salvata per questa data.</li>';return}
-    const F=await Promise.all(L.map(x=>fetch(x.download_url).then(r=>r.json()).catch(()=>null)));
-    box.innerHTML=F.filter(f=>f&&f.tipo==='serata'&&Array.isArray(f.oggetti)).map(f=>`<li><b>${String(f.nickname).replace(/[<>&]/g,'')}</b> · ${f.strumento==='GSO'?'GSO':'TDIG'} · ${f.oggetti.map(o=>`${String(o.nome).replace(/[<>&]/g,'')} ${o.da}–${o.a}`).join(', ')}</li>`).join('')||'<li class="sesNota">Nessuna serata valida per questa data.</li>'}
+function sesNuova(){SES.file=null;SES.fatta=false;SES.piano={TDIG:[],GSO:[]};$('sesStato').textContent='';sesAggiorna()}
+const sesValida=f=>f&&f.tipo==='serata'&&f.versione===2&&f.piano&&SES_K.every(k=>Array.isArray(f.piano[k]));
+async function sesCaricaTutte(){const box=$('sesSalvate');try{const r=await fetch(SES_API+'serate',{headers:sesH(),cache:'no-store'});
+    if(r.status===404){SES.tutte=[];box.innerHTML='<li class="sesNota">Ancora nessuna serata salvata.</li>';sesRidisegna();return}
+    const L=(await r.json()).filter(x=>x.name.endsWith('.json'));
+    const F=await Promise.all(L.map(x=>fetch(SES_API+x.path,{headers:{...sesH(),Accept:'application/vnd.github.raw+json'},cache:'no-store'}).then(r=>r.json()).then(f=>({path:x.path,sha:x.sha,f})).catch(()=>null)));
+    SES.tutte=F.filter(x=>x&&sesValida(x.f));sesRidisegna();
+    const D=SES.tutte.filter(x=>x.f.data===SES.data);
+    box.innerHTML=D.length?D.map((x,i)=>`<li><b>${sesEsc(x.f.nickname)}</b>${x.f.fatta?' <span class="sesOk">fatta</span>':''} · ${SES_K.flatMap(k=>x.f.piano[k].map(it=>`${sesEsc(it.nome)} (${k})`)).join(', ')||'vuota'} <button class="mini" data-apri="${sesEsc(x.path)}">apri</button></li>`).join(''):'<li class="sesNota">Nessuna serata salvata per questa data.</li>';
+    box.querySelectorAll('[data-apri]').forEach(b=>b.onclick=()=>{const x=SES.tutte.find(y=>y.path===b.dataset.apri);if(!x)return;const f=x.f;
+      SES.file={path:x.path,sha:x.sha};SES.fatta=!!f.fatta;SES.nick=f.nickname||SES.nick;SES.opz={morto:f.morto??2,scarto:f.scarto??20,sqm:f.sqm||20.15,snr:f.snr||20,inizio:f.inizio||''};
+      SES.piano={TDIG:f.piano.TDIG.map(x=>({...x,righe:x.righe.map(r=>({...r}))})),GSO:f.piano.GSO.map(x=>({...x,righe:x.righe.map(r=>({...r}))}))};
+      $('sesNick').value=SES.nick;$('sesMorto').value=SES.opz.morto;$('sesScarto').value=SES.opz.scarto;$('sesSqm').value=SES.opz.sqm;$('sesSnr').value=SES.opz.snr;$('sesInizio').value=SES.opz.inizio;$('sesFatta').checked=SES.fatta;
+      $('sesStato').textContent='Serata aperta: le modifiche si salvano sullo stesso file.';sesRidisegna()})}
   catch(e){box.innerHTML='<li class="sesNota">Elenco delle serate non raggiungibile.</li>'}}
 
 $('sesChiudi').onclick=()=>sesApri(false);
 $('ses').addEventListener('click',e=>{if(e.target===$('ses'))sesApri(false)});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('ses').hidden){sesApri(false);e.preventDefault();e.stopImmediatePropagation()}},true);
-$('sesData').onchange=e=>{SES.data=e.target.value;SES.sel=[];sesAggiorna()};
-$('sesStrum').onchange=e=>{SES.strum=e.target.value;sesStrumUI();sesSalvaPref();sesDisegnaOggetti()};
-$('sesFil').onchange=e=>{SES.fil=e.target.value;sesSalvaPref();sesDisegnaOggetti()};
-$('sesCerca').oninput=()=>sesDisegnaOggetti();
-$('sesSalva').onclick=sesSalva;$('sesScarica').onclick=sesScarica;
+$('sesData').onchange=e=>{SES.data=e.target.value;SES.file=null;SES.fatta=false;sesAggiorna();sesCaricaTutte()};
+[['sesMorto','morto'],['sesScarto','scarto'],['sesSqm','sqm'],['sesSnr','snr'],['sesInizio','inizio']].forEach(([id,k])=>$(id).onchange=e=>{SES.opz[k]=k==='inizio'?e.target.value:+String(e.target.value).replace(',','.');sesRidisegna()});
+$('sesFatta').onchange=e=>{SES.fatta=e.target.checked};
+$('sesSalva').onclick=sesSalva;$('sesScarica').onclick=sesScarica;$('sesNuova').onclick=sesNuova;
+
 if(location.hash==='#serata')setTimeout(()=>sesApri(true),600);
 
 </script>
