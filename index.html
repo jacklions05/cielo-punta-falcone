@@ -301,6 +301,15 @@ table.sesMet td.ok{background:rgba(70,160,90,.28)} table.sesMet td.mah{backgroun
 #vis .visBox{background:#121110;border:1px solid var(--rule);border-radius:18px;max-width:420px;width:100%;max-height:100%;overflow:auto;padding:18px 18px 14px;box-shadow:0 12px 40px rgba(0,0,0,.6)}
 #vis h2{margin:0 0 4px;font:600 1.3rem var(--f-display)}
 #vis p{margin:0 0 12px;color:#cfcdc8;font-size:.86rem;line-height:1.45}
+#vis .visInfo{margin:0 0 12px}
+#vis .visInfo details{border:1px solid var(--rule);border-radius:12px;margin:0 0 6px;background:#1a1815}
+#vis .visInfo summary{cursor:pointer;padding:.55rem .8rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline;list-style:none}
+#vis .visInfo summary::-webkit-details-marker{display:none}
+#vis .visInfo summary::after{content:'+';color:#f3d9a8;font-weight:600}
+#vis .visInfo details[open] summary::after{content:'−'}
+#vis .visInfo summary small{color:#a9a59c;font-size:.75rem;margin-left:auto}
+#vis .visInfo details p{margin:0;padding:0 .8rem .65rem}
+#vis .visInfo .visConf{color:#f3d9a8;margin-top:8px}
 #vis .visLink{display:flex;align-items:center;gap:10px;padding:.65rem .8rem;border:1px solid var(--rule);border-radius:12px;margin-bottom:8px;color:var(--ink);text-decoration:none;background:#181716}
 #vis .visLink:hover{border-color:var(--accent)}
 #vis .visLink.prima{background:#2a2112;border-color:#6b5328}
@@ -468,7 +477,17 @@ table.sesMet td.ok{background:rgba(70,160,90,.28)} table.sesMet td.mah{backgroun
   <div class="visBox">
     <button class="visX mini" id="visChiudi" aria-label="Chiudi">✕</button>
     <h2>Visita l'osservatorio</h2>
-    <p>Associazione Astrofili Piombino · osservatorio di Punta Falcone, 57025 Piombino (LI). Per prenotare una serata o chiedere informazioni scrivici:</p>
+    <p>Associazione Astrofili Piombino · osservatorio di Punta Falcone, 57025 Piombino (LI). Prima di scriverci leggi come funzionano le visite:</p>
+    <div class="visInfo">
+      <p>Si osserva al telescopio e a occhio nudo, con la spiegazione degli oggetti e il racconto del cielo notturno. L'ora di inizio cambia con la stagione e la durata della notte. L'AAP non vende biglietti: chiede un'offerta libera.</p>
+      <details><summary><b>Serate pubbliche</b><small>il venerdì, da maggio a settembre</small></summary>
+        <p>Da maggio a settembre ogni venerdì; da settembre a maggio solo nelle date che vengono annunciate. Durano in media un'ora, in uno, due o tre turni. Gruppi di 15–18 persone, fino a 20–22 nei mesi più freschi. Offerta consigliata: 4 € a persona.</p></details>
+      <details><summary><b>Gruppi privati</b><small>tutto l'anno, su richiesta</small></summary>
+        <p>Si accettano in base alla disponibilità delle guide e agli impegni già in calendario. Durano almeno due ore. Massimo 12 persone. Offerta consigliata: 50 € a gruppo.</p></details>
+      <details><summary><b>Scuole</b><small>da ottobre a giugno</small></summary>
+        <p>Incontro organizzato su misura. Gruppi di 15–20 ragazzi accompagnati da insegnanti o genitori; i gruppi numerosi si dividono in due turni. Offerta consigliata: 4 € a ragazzo, gli insegnanti no.</p></details>
+      <p class="visConf">Per prenotare scrivici, meglio su WhatsApp, indicando il tipo di visita, il numero di persone e le date che preferisci. La visita è confermata solo quando ti rispondiamo.</p>
+    </div>
     <a class="visLink prima" onclick="conta('prenota/whatsapp','Prenota: WhatsApp')" href="https://wa.me/393534692387" target="_blank" rel="noopener"><span>💬</span><span><b>Prenota su WhatsApp</b><small>+39 353 469 2387</small></span></a>
     <a class="visLink" onclick="conta('prenota/email','Prenota: e-mail')" href="mailto:visite@astropiombino.org" target="_blank" rel="noopener"><span>✉️</span><span><b>Scrivi un'e-mail</b><small>visite@astropiombino.org</small></span></a>
     <a class="visLink" href="https://www.google.com/maps/search/?api=1&query=Osservatorio%20astronomico%20Punta%20Falcone%20Piombino" target="_blank" rel="noopener"><span>📍</span><span><b>Come arrivare</b><small>Punta Falcone, Piombino</small></span></a>
