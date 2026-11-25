@@ -426,7 +426,7 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 </div>
 <script>/* statistiche GoatCounter (jacklionse): #non-contarmi esclude questo browser, #conta-di-nuovo lo riattiva */
 (function(){var no=false;try{var h=location.hash;if(h==='#non-contarmi')localStorage.setItem('pf-noconta','1');if(h==='#conta-di-nuovo')localStorage.removeItem('pf-noconta');no=localStorage.getItem('pf-noconta')==='1'}catch(e){}
-window.PF_NOCONTA=no;if(no)return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://jacklionse.goatcounter.com/count');document.head.appendChild(s)})();
+window.PF_NOCONTA=no;if(no)return;window.goatcounter={allow_frame:true};var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://jacklionse.goatcounter.com/count');document.head.appendChild(s)})();
 addEventListener('load',function(){var h=location.hash;if(h==='#non-contarmi'||h==='#conta-di-nuovo')setTimeout(function(){try{toast(window.PF_NOCONTA?'Questo browser non viene più contato nelle statistiche':'Questo browser viene di nuovo contato')}catch(e){}},1200)});
 function conta(path,title){try{if(!window.PF_NOCONTA&&window.goatcounter&&goatcounter.count)goatcounter.count({path:path,title:title||path,event:true})}catch(e){}}
 </script>
