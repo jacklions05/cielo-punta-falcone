@@ -301,6 +301,15 @@ table.sesMet td.ok{background:rgba(70,160,90,.28)} table.sesMet td.mah{backgroun
 #vis .visBox{background:#121110;border:1px solid var(--rule);border-radius:18px;max-width:420px;width:100%;max-height:100%;overflow:auto;padding:18px 18px 14px;box-shadow:0 12px 40px rgba(0,0,0,.6)}
 #vis h2{margin:0 0 4px;font:600 1.3rem var(--f-display)}
 #vis p{margin:0 0 12px;color:#cfcdc8;font-size:.86rem;line-height:1.45}
+#vis .visBox{position:relative;isolation:isolate}
+#vis .visBox::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;background:url("https://web.astropiombino.org/web/wp-content/uploads/2020/03/Osservatorio_2013_00004.jpg") center/cover;opacity:.09;pointer-events:none}
+#vis .visTesta{position:relative;margin:-18px -18px 34px;height:150px;border-radius:18px 18px 0 0;background:#1a1815}
+#vis .visFoto{width:100%;height:100%;object-fit:cover;object-position:center 40%;border-radius:18px 18px 0 0;display:block;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+#vis .visTesta .visX{position:absolute;top:10px;right:10px;float:none;background:rgba(0,0,0,.55)}
+#vis .visLogo{position:absolute;left:16px;bottom:-30px;width:72px;height:72px;border-radius:50%;border:2px solid #f3d9a8;box-shadow:0 4px 14px rgba(0,0,0,.6);background:#000}
+#vis .visSub{font-size:.8rem;color:#a9a59c;margin:0 0 10px}
+#vis .visInfo .visLead{font:600 1.02rem/1.45 var(--f-ui);color:#f1eee8;margin:0 0 10px}
+#vis .visInfo summary b{font-size:1.02rem}
 #vis .visInfo{margin:0 0 12px}
 #vis .visInfo details{border:1px solid var(--rule);border-radius:12px;margin:0 0 6px;background:#1a1815}
 #vis .visInfo summary{cursor:pointer;padding:.55rem .8rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline;list-style:none}
@@ -475,11 +484,13 @@ table.sesMet td.ok{background:rgba(70,160,90,.28)} table.sesMet td.mah{backgroun
 </div>
 <div id="vis" hidden role="dialog" aria-label="Visita l'osservatorio">
   <div class="visBox">
-    <button class="visX mini" id="visChiudi" aria-label="Chiudi">✕</button>
+    <div class="visTesta"><img class="visFoto" src="https://web.astropiombino.org/web/wp-content/uploads/2020/03/Osservatorio_2013_00004.jpg" alt="La cupola dell'osservatorio di Punta Falcone" loading="lazy" onerror="this.remove()">
+      <button class="visX mini" id="visChiudi" aria-label="Chiudi">✕</button>
+      <img class="visLogo" src="https://web.astropiombino.org/web/wp-content/uploads/2020/03/astropiombino_512.jpg" alt="Logo dell'Associazione Astrofili Piombino" loading="lazy" onerror="this.remove()"></div>
     <h2>Visita l'osservatorio</h2>
-    <p>Associazione Astrofili Piombino · osservatorio di Punta Falcone, 57025 Piombino (LI). Prima di scriverci leggi come funzionano le visite:</p>
+    <p class="visSub">Associazione Astrofili Piombino · osservatorio di Punta Falcone, 57025 Piombino (LI)</p>
     <div class="visInfo">
-      <p>Si osserva al telescopio e a occhio nudo, con la spiegazione degli oggetti e il racconto del cielo notturno. L'ora di inizio cambia con la stagione e la durata della notte. L'AAP non vende biglietti: chiede un'offerta libera.</p>
+      <p class="visLead">Si osserva al telescopio e a occhio nudo, con la spiegazione degli oggetti e il racconto del cielo notturno. L'ora di inizio cambia con la stagione e la durata della notte. L'AAP non vende biglietti: chiede un'offerta libera. Prima di scriverci leggi come funzionano le visite.</p>
       <details><summary><b>Serate pubbliche</b><small>il venerdì, da maggio a settembre</small></summary>
         <p>Da maggio a settembre ogni venerdì; da settembre a maggio solo nelle date che vengono annunciate. Durano in media un'ora, in uno, due o tre turni. Gruppi di 15–18 persone, fino a 20–22 nei mesi più freschi. Offerta consigliata: 4 € a persona.</p></details>
       <details><summary><b>Gruppi privati</b><small>tutto l'anno, su richiesta</small></summary>
