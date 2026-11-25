@@ -413,8 +413,8 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
     <button class="visX mini" id="visChiudi" aria-label="Chiudi">✕</button>
     <h2>Visita l'osservatorio</h2>
     <p>Associazione Astrofili Piombino · osservatorio di Punta Falcone, 57025 Piombino (LI). Per prenotare una serata o chiedere informazioni scrivici:</p>
-    <a class="visLink prima" href="https://wa.me/393534692387" target="_blank" rel="noopener"><span>💬</span><span><b>Prenota su WhatsApp</b><small>+39 353 469 2387</small></span></a>
-    <a class="visLink" href="mailto:visite@astropiombino.org" target="_blank" rel="noopener"><span>✉️</span><span><b>Scrivi un'e-mail</b><small>visite@astropiombino.org</small></span></a>
+    <a class="visLink prima" onclick="conta('prenota/whatsapp','Prenota: WhatsApp')" href="https://wa.me/393534692387" target="_blank" rel="noopener"><span>💬</span><span><b>Prenota su WhatsApp</b><small>+39 353 469 2387</small></span></a>
+    <a class="visLink" onclick="conta('prenota/email','Prenota: e-mail')" href="mailto:visite@astropiombino.org" target="_blank" rel="noopener"><span>✉️</span><span><b>Scrivi un'e-mail</b><small>visite@astropiombino.org</small></span></a>
     <a class="visLink" href="https://www.google.com/maps/search/?api=1&query=Osservatorio%20astronomico%20Punta%20Falcone%20Piombino" target="_blank" rel="noopener"><span>📍</span><span><b>Come arrivare</b><small>Punta Falcone, Piombino</small></span></a>
     <a class="visLink" href="http://web.astropiombino.org" target="_blank" rel="noopener"><span>🔭</span><span><b>Sito dell'associazione</b><small>web.astropiombino.org</small></span></a>
     <div class="visSoc">
@@ -424,6 +424,12 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
     </div>
   </div>
 </div>
+<script>/* statistiche GoatCounter (jacklionse): #non-contarmi esclude questo browser, #conta-di-nuovo lo riattiva */
+(function(){var no=false;try{var h=location.hash;if(h==='#non-contarmi')localStorage.setItem('pf-noconta','1');if(h==='#conta-di-nuovo')localStorage.removeItem('pf-noconta');no=localStorage.getItem('pf-noconta')==='1'}catch(e){}
+window.PF_NOCONTA=no;if(no)return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://jacklionse.goatcounter.com/count');document.head.appendChild(s)})();
+addEventListener('load',function(){var h=location.hash;if(h==='#non-contarmi'||h==='#conta-di-nuovo')setTimeout(function(){try{toast(window.PF_NOCONTA?'Questo browser non viene più contato nelle statistiche':'Questo browser viene di nuovo contato')}catch(e){}},1200)});
+function conta(path,title){try{if(!window.PF_NOCONTA&&window.goatcounter&&goatcounter.count)goatcounter.count({path:path,title:title||path,event:true})}catch(e){}}
+</script>
 <script>
 /* ======================================================================
    ARCHIVIO ASTROIMMAGINI — web.astropiombino.org/category/astroimmagini/
@@ -2454,6 +2460,7 @@ function altri(o){ // per comete e asteroidi: anche quelli fotografati prima
   return `<h3>${o.kind==='cometa'?'Le altre comete dell\'archivio':'Gli altri asteroidi dell\'archivio'}</h3><div class="photos">${prima.flatMap(x=>x.foto.filter(f=>f.data<=oggi).map(f=>`<a class="photo src-${f.fonte}" href="${f.url}" target="_blank" rel="noopener" style="grid-template-columns:1fr"><span style="min-width:0"><div class="t">${f.titolo}</div><div class="d">${x.nome} · pubblicato il ${new Date(f.data+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div></span></a>`)).join('')}</div>`}
 function cardFoto(f,i){const fr=typeof FRAG!=="undefined"&&FRAG[f.url+"#"+state.sel];return `<a class="photo src-${f.fonte}" href="${f.url}${fr?"#:~:text="+fr:""}" target="_blank" rel="noopener"><span class="th" id="th${i}"></span><span style="min-width:0"><div class="t">${f.titolo}${f.ecl?(ECLISSI[f.ecl].corpo==='SOLE'?'<span class="badge sole">eclissi di Sole</span>':'<span class="badge">eclissi di Luna</span>'):''}${/supernova|nova /i.test(f.titolo)?'<span class="badge sn">'+(/supernova/i.test(f.titolo)?'supernova':'nova')+'</span>':''}</div><div class="d">${f.fonte==='storico'&&!f.url.includes('win.astropiombino')?'immagine del':'pubblicato il'} ${new Date(f.data+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div><div class="note">${f.fonte==='storico'?(f.url.includes('win.astropiombino')?'sito 1999–2008 · ':'sito storico · '):f.fonte==='esterno'?'sito UAI · ':''}${f.altri.length?`anche in: ${f.altri.map(x=>(CATALOGO[x]||SPECIALI[x])[0]).join(', ')} · `:''}Apri la pagina ↗</div></span></a>`}
 function select(id,keep){
+  if(!keep&&state.sel!==id){const _o=OGGETTI.find(x=>x.id===id);conta('oggetto/'+id,_o?_o.nome:id)}
   if(!keep&&typeof TEL!=='undefined')TEL.goal={id};
   if(!keep){if(menu==='ecl'||menu==='layers')chiudiMenu()} state.sel=id; const o=OGGETTI.find(x=>x.id===id); const p=$('panel'); const sc=p.scrollTop;
   const fotos=o.foto.filter(fin).sort((a,b)=>b.data.localeCompare(a.data)); state.selN=fotos.length;
@@ -3333,7 +3340,7 @@ addEventListener('keydown',e=>{if(e.key!=='Escape')return;const vis=id=>$(id)&&!
   if(fatto){e.preventDefault();e.stopImmediatePropagation()}},true);
 for(const id of ['ocu','sct'])$(id).addEventListener('click',e=>{if(e.target===$(id))$(id).hidden=true});
 /* ===== VISITA L'OSSERVATORIO: contatti e prenotazione (dati dal Linktree dell'associazione) ===== */
-function visApri(on){$('vis').hidden=!on;$('bVis').setAttribute('aria-pressed',on);if(on){if(menu)chiudiMenu();$('visChiudi').focus()}}
+function visApri(on){if(on)conta('prenota/apre','Apre «Prenota una visita»');$('vis').hidden=!on;$('bVis').setAttribute('aria-pressed',on);if(on){if(menu)chiudiMenu();$('visChiudi').focus()}}
 $('bVis').onclick=()=>visApri($('vis').hidden);
 $('visChiudi').onclick=()=>visApri(false);
 $('vis').addEventListener('click',e=>{if(e.target===$('vis'))visApri(false)});
