@@ -265,6 +265,34 @@ body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea,select,#panel h2,#panel .hint,#panel dl,#panel .photo .t,#tl dl,#tl .tlTit,#cf .cfInfo,#ocuInfo,#sctTesto,#toast{-webkit-user-select:text;user-select:text}
 canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 /* ===== Visita l'osservatorio: contatti e prenotazione ===== */
+/* serate di astrofotografia (parte soci) */
+#ses{position:fixed;inset:0;z-index:75;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:12px}
+#ses[hidden]{display:none}
+#ses .sesBox{background:#121110;border:1px solid var(--rule);border-radius:18px;max-width:980px;width:100%;max-height:100%;overflow:auto;padding:16px 18px 18px;box-shadow:0 12px 40px rgba(0,0,0,.6);user-select:text}
+#ses h2{margin:0 0 6px;font:600 1.35rem var(--f-display)}
+#ses h3{margin:16px 0 6px;font:600 1.05rem var(--f-display);color:#f3d9a8}
+#ses .sesRiga{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:end}
+#ses label.sesCampo{display:grid;gap:2px;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#a9a59c}
+#ses input,#ses select{font:500 .9rem var(--f-ui);color:#eee;background:#1c1a17;border:1px solid var(--rule);border-radius:8px;padding:.4rem .5rem}
+#ses .sesNota{color:#a9a59c;font-size:.8rem;margin:.4rem 0;list-style:none}
+#sesNotte{font-size:.88rem;color:#ddd;margin:.6rem 0 0}
+.sesScroll{overflow-x:auto}
+table.sesMet{border-collapse:collapse;font:500 .74rem var(--f-ui);white-space:nowrap}
+table.sesMet th,table.sesMet td{padding:3px 5px;text-align:center;border-bottom:1px solid #2a2722}
+table.sesMet th:first-child{text-align:left;color:#a9a59c;font-weight:500;position:sticky;left:0;background:#121110}
+table.sesMet td.ok{background:rgba(70,160,90,.28)} table.sesMet td.mah{background:rgba(200,160,40,.28)} table.sesMet td.no{background:rgba(190,60,50,.32)}
+#sesNuvWrap{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start}
+#sesNuv{width:min(100%,400px);aspect-ratio:4/3;image-rendering:pixelated;border-radius:10px;border:1px solid var(--rule)}
+#sesNuvCtl{display:flex;gap:8px;align-items:center;font-size:.85rem}
+#sesOgg,#sesSeq,#sesSalvate{list-style:none;margin:0;padding:0}
+#sesOgg li{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:.35rem 0;border-bottom:1px solid #24211d;font-size:.85rem}
+#sesOgg label{display:flex;gap:8px;align-items:center;cursor:pointer}
+#sesOgg small,#sesSeq small{display:block;color:#a9a59c;font-size:.72rem}
+#sesOgg i{color:#f3d9a8;font-style:normal;font-size:.7rem;border:1px solid #8a6a30;border-radius:6px;padding:0 4px}
+.sesNum{text-align:right;min-width:9ch}
+#sesSeq li,#sesSalvate li{padding:.3rem 0;font-size:.86rem;border-bottom:1px solid #24211d}
+#ses .sesCol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){#ses .sesCol{grid-template-columns:1fr}#sesOgg li{grid-template-columns:1fr auto}#sesOgg li .sesNum:nth-child(2){display:none}}
 #vis{position:fixed;inset:0;z-index:74;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
 #vis[hidden]{display:none}
 #vis .visBox{background:#121110;border:1px solid var(--rule);border-radius:18px;max-width:420px;width:100%;max-height:100%;overflow:auto;padding:18px 18px 14px;box-shadow:0 12px 40px rgba(0,0,0,.6)}
@@ -407,6 +435,33 @@ canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 <div id="cf" hidden role="dialog" aria-label="Confronta le foto">
   <div class="cfTesta"><h2 id="cfTit"></h2><button id="cfChiudi" aria-label="Chiudi il confronto">✕ Chiudi</button></div>
   <div class="cfCorpo" id="cfCorpo"></div>
+</div>
+<div id="ses" hidden role="dialog" aria-label="Pianifica una serata">
+  <div class="sesBox">
+    <button class="visX mini" id="sesChiudi" aria-label="Chiudi">✕</button>
+    <h2>Pianifica una serata di astrofotografia</h2>
+    <div class="sesRiga">
+      <label class="sesCampo">Notte del<input type="date" id="sesData"></label>
+      <label class="sesCampo">Strumento<select id="sesStrum"><option value="TDIG">TDIG · RC 360 + Zeus 455M</option><option value="GSO">GSO RC8 + ASI2600MC</option></select></label>
+      <label class="sesCampo">Filtro<select id="sesFil"></select></label>
+    </div>
+    <p id="sesNotte"></p>
+    <h3>Meteo della notte, ora per ora</h3>
+    <div class="sesScroll" id="sesMeteoTab"></div>
+    <h3>Nuvole previste</h3>
+    <div id="sesNuvWrap"><canvas id="sesNuv" width="200" height="150"></canvas>
+      <div><div id="sesNuvCtl"><button class="mini" id="sesNuvPlay">▶ / ❚❚</button><input type="range" id="sesNuvSl" min="0" max="9" value="0"><b id="sesNuvOra"></b></div><p class="sesNota" id="sesNuvInfo"></p></div></div>
+    <h3>Oggetti migliori per questa notte</h3>
+    <div class="sesRiga"><label class="sesCampo">Cerca<input id="sesCerca" placeholder="M33, nebulosa, NGC…"></label></div>
+    <p class="sesNota">Ore sopra 30° durante il buio, ora in cui l'oggetto è più alto e ore di posa per SNR 10 sulle parti esterne (2 mag/″² sotto la media), con lo strumento e il filtro scelti e il cielo di quella notte (SQM 20,15 più la Luna). Le ore sono indicative.</p>
+    <ul id="sesOgg"></ul>
+    <div class="sesCol">
+      <div><h3>Sequenza della serata</h3><ul id="sesSeq"></ul>
+        <div class="sesRiga" style="margin-top:8px"><label class="sesCampo">Il tuo nickname<input id="sesNick" maxlength="30"></label><button class="mini" id="sesSalva">Salva la serata</button><button class="mini" id="sesScarica">Scarica file</button></div>
+        <p class="sesNota" id="sesStato"></p></div>
+      <div><h3>Serate già salvate per questa data</h3><ul id="sesSalvate"></ul></div>
+    </div>
+  </div>
 </div>
 <div id="vis" hidden role="dialog" aria-label="Visita l'osservatorio">
   <div class="visBox">
@@ -2576,14 +2631,14 @@ function fillList(){
   const oggi=isoDay(); const ul=$('listUl'); let q=norma($('cerca').value);
   if(PAROLA_SOCI(q)){if(!state.dafare){state.dafare=true;redraw()}q=''}
   $('bNotte').setAttribute('aria-pressed',!!state.notte);
-  const testa=state.dafare?`<li class="soci"><span>Da fotografare · ${DAFARE.filter(d=>d[7]==='messier').length} Messier e ${DAFARE.filter(d=>d[7]==='facile').length} oggetti facili da Punta Falcone e ${DAFARE.filter(d=>d[7]==='rasc').length} della lista RASC Finest NGC</span><button id="bEsciSoci" class="mini">Esci</button></li>`+statSoci():'';
+  const testa=state.dafare?`<li class="soci"><span>Da fotografare · ${DAFARE.filter(d=>d[7]==='messier').length} Messier e ${DAFARE.filter(d=>d[7]==='facile').length} oggetti facili da Punta Falcone e ${DAFARE.filter(d=>d[7]==='rasc').length} della lista RASC Finest NGC</span><button id="bSes" class="mini">🌙 Pianifica una serata</button><button id="bEsciSoci" class="mini">Esci</button></li>`+statSoci():'';
   if(state.notte||state.dafare){const cat=$('catalogo').value;let rows;
     if(state.notte){const N=stanotte();rows=N.res.filter(([o])=>(!q||o._cerca.includes(q))&&(!cat||o._sigle.some(g=>catDi(g)===cat))).map(([o,t,a])=>[o,oraDi(t)+' · '+a.toFixed(0)+'°',t]);
       rows.unshift(N.ini?['hint',`${Math.abs(tNow()-Date.now())<14*3600e3?'Stanotte':'Quella sera'}: dalle ${oraDi(N.ini)} all'una, alti più di 25°. A destra l'ora in cui stanno più alti.`]:['hint','A quest\'ora del giorno non fa buio prima dell\'una.'])}
     else rows=OGGETTI.filter(o=>o.dafare&&(!q||o._cerca.includes(q))&&(!cat||o._sigle.some(g=>catDi(g)===cat))).sort((a,b)=>(({messier:0,facile:1,rasc:2})[a.dafare]-({messier:0,facile:1,rasc:2})[b.dafare])||numDi(a.nome)-numDi(b.nome)).map(o=>{const al=altaz(vecOf(o))[1];return [o,al>0?al.toFixed(0)+'°':'giù',null]});
     const html=testa+rows.map(([o,d,t])=>o==='hint'?`<li class="hint" style="padding:.3rem .5rem .5rem">${d}</li>`:`<li><button data-id="${o.id}"${t?` data-t="${t}"`:''}><span><span class="sw" style="margin-right:8px;border-color:${o.dafare?'#bbb':coloreTipo(o)}${o.dafare?';border-style:dashed':''}"></span>${o.nome}${o.alias&&o.dafare?`<span class="sig">${o.alias}</span>`:''}</span><span class="alt">${d}</span></button></li>`).join('')+(rows.filter(x=>x[0]!=='hint').length?'':'<li class="hint" style="padding:.5rem">Nessun oggetto.</li>');
     if(html===fillList.last)return;fillList.last=html;ul.innerHTML=html;
-    if($('bEsciSoci'))$('bEsciSoci').onclick=()=>{state.dafare=false;$('cerca').value='';if(state.sel&&OGGETTI.find(o=>o.id===state.sel).dafare)chiudiTutto();fillList.last=null;fillList();redraw()};
+    if($('bSes'))$('bSes').onclick=()=>sesApri(true);if($('bEsciSoci'))$('bEsciSoci').onclick=()=>{state.dafare=false;$('cerca').value='';if(state.sel&&OGGETTI.find(o=>o.id===state.sel).dafare)chiudiTutto();fillList.last=null;fillList();redraw()};
     ul.querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{if(innerWidth<900)chiudiMenu();const o=OGGETTI.find(x=>x.id===b.dataset.id);
       if(b.dataset.t){setFromT(+b.dataset.t);redraw();requestAnimationFrame(()=>{draw();select(o.id);suonoOggetto(o);puntaA(o)})}else if(o.dafare){select(o.id);requestAnimationFrame(()=>{draw();puntaA(o)})}else vaiA(o)});
     return}
@@ -3359,4 +3414,175 @@ function fsCambia(){try{if(FS.on()){(document.exitFullscreen||document.webkitExi
 function fsUI(){const on=FS.on();$('bFull').setAttribute('aria-pressed',on);$('bFull').innerHTML=on?'⛶<span class="fsTxt"> Esci da schermo intero</span>':'⛶<span class="fsTxt"> Schermo intero</span>';$('bFull').setAttribute('aria-label',on?'Esci da schermo intero':'Schermo intero');$('bFull').title=(on?'Esci da schermo intero':'Schermo intero')+' (tasto F)';setTimeout(()=>{try{resize()}catch(e){}},120)}
 if(FS.ok()){$('bFull').hidden=false;$('bFull').onclick=fsCambia;document.addEventListener('fullscreenchange',fsUI);document.addEventListener('webkitfullscreenchange',fsUI)}
 addEventListener('keydown',e=>{if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&FS.ok()&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))fsCambia()});
+/* ===== Serate di astrofotografia (parte soci): planner della notte, meteo, oggetti, ore necessarie, salvataggio =====
+   Si apre dalla lista soci (tasto «Pianifica una serata») o con #serata. Meteo da Open-Meteo (gratuito, senza chiave),
+   seeing stimato dai venti in quota, nuvole animate da una griglia di punti del modello. Motore delle ore dal calcolatore
+   «SNR TDIG vs GSO». Le serate si salvano come file JSON nel repository jacklions05/cielo-punta-falcone-sessioni. */
+const SNR=(()=>{const TAU=.85,RAY=1.870e-6,DL=.5,GRID=[];for(let l=395;l<=705;l+=DL)GRID.push(l);
+  const Q={lam:[400,425,450,475,500,525,550,575,600,625,650,675,700],mono:[.75,.85,.88,.90,.91,.89,.86,.82,.77,.71,.66,.61,.57],
+    B:[.55,.70,.75,.65,.45,.20,.06,.03,.02,.02,.02,.03,.04],G:[.05,.08,.15,.40,.62,.80,.75,.50,.20,.08,.05,.05,.06],R:[.03,.02,.02,.02,.03,.05,.10,.40,.62,.62,.60,.55,.50]};
+  const qe=(c,l)=>{const x=Q.lam,y=Q[c];if(l<=x[0])return y[0];if(l>=x[12])return y[12];let i=1;while(x[i]<l)i++;const t=(l-x[i-1])/(x[i]-x[i-1]);return y[i-1]+t*(y[i]-y[i-1])};
+  const LN={Ha:656.3,OIII:500.7,SII:672.4},nb=(c,w)=>[c-w/2,c+w/2];
+  const FIL={mono:{L:['L',[[400,700]],.95,{mono:1}],R:['R',[[590,700]],.95,{mono:1}],G:['G',[[490,580]],.95,{mono:1}],B:['B',[[400,510]],.95,{mono:1}],
+      Ha:['Hα 7 nm',[nb(LN.Ha,7)],.9,{mono:1},1],OIII:['OIII 7 nm',[nb(LN.OIII,7)],.9,{mono:1},1],SII:['SII 7 nm',[nb(LN.SII,7)],.9,{mono:1},1]},
+    osc:{NONE:['senza filtro',[[400,700]],.97,{R:.25,G:.5,B:.25}],DHA:['dual band · Hα',[nb(LN.Ha,7),nb(LN.OIII,7)],.9,{R:.25},1],DOIII:['dual band · OIII',[nb(LN.Ha,7),nb(LN.OIII,7)],.9,{G:.5,B:.25},1]}};
+  const STR={TDIG:{nome:'TDIG · RC 360 f/8 + Zeus 455M',D:36,f:2880,eps:.47,kind:'mono',p:3.76,w:36,h:24,rn:1.5},
+             GSO:{nome:'GSO RC8 f/8 + ASI2600MC',D:20.3,f:1624,eps:.42,kind:'osc',p:3.76,w:23.5,h:15.7,rn:1.5}};
+  const C={};function ch(k,fk){const key=k+fk;if(C[key])return C[key];const s=STR[k],f=FIL[s.kind][fk],bands=f[1];
+    const eff=l=>{if(!bands.some(([a,b])=>l>=a&&l<=b))return 0;let x=0;for(const c in f[3])x+=f[3][c]*qe(c,l);return f[2]*x};
+    let cont=0;for(const l of GRID){const e=eff(l);if(e)cont+=1e4*(550/l)*e*DL}
+    return C[key]={cont,pix:Object.values(f[3]).reduce((a,b)=>a+b,0),line:{Ha:eff(LN.Ha),OIII:eff(LN.OIII),SII:eff(LN.SII)}}}
+  function cielo(dark,illum,moonAlt,sep,objAlt){if(illum<=0||moonAlt<=0)return dark;const k=.17,al=Math.acos(Math.min(1,Math.max(-1,2*illum-1)))*180/Math.PI;
+    const I=10**(-.4*(3.84+.026*al+4e-9*al**4)),r=sep*Math.PI/180,fr=10**5.36*(1.06+Math.cos(r)**2)+10**(6.15-sep/40);
+    const X=z=>1/Math.sqrt(1-.96*Math.sin(z*Math.PI/180)**2),Bm=fr*I*10**(-.4*k*X(90-moonAlt))*(1-10**(-.4*k*X(90-Math.max(objAlt,5))));
+    const B0=34.08*Math.exp(20.7233-.92104*dark);return (20.7233-Math.log((B0+Bm)/34.08))/.92104}
+  /* ore di posa (di orologio) per SNR 10 su un'area di 2″×2″ della parte debole dell'oggetto.
+     o={mu} per il continuo, oppure {ha,o3,s2} in rayleigh per le nebulose a emissione */
+  function ore(k,fk,o,sky,op={}){const s=STR[k],c=ch(k,fk),A=Math.PI/4*s.D*s.D*(1-s.eps*s.eps)*TAU,ps=206.265*s.p/s.f;
+    const tsub=op.tsub||(FIL[s.kind][fk][4]?300:180),oh=4,T=10,nmin=10,good=.75,dark=.0007,om=4;
+    const sb=o.ha!=null?A*RAY*(o.ha*c.line.Ha+o.o3*c.line.OIII+o.s2*c.line.SII):A*c.cont*10**(-.4*o.mu);
+    const S=sb*om,B=A*c.cont*10**(-.4*sky)*om,npx=om/ps/ps*c.pix;if(!(S>0))return Infinity;
+    return Math.max(T*T*(S+B+npx*(dark+s.rn**2/tsub))/S/S*(tsub+oh)/tsub/3600,nmin*(tsub+oh)/3600)/good}
+  const fov=k=>{const s=STR[k];return [s.w/s.f*206265/60,s.h/s.f*206265/60]};
+  return {STR,FIL,ore,cielo,fov,filtri:k=>Object.entries(FIL[STR[k].kind]).map(([id,f])=>[id,f[0]])}})();
+
+const SES={strum:'TDIG',fil:'L',data:null,notte:null,meteo:null,nuvole:null,sel:[],nick:'',salvate:[]};
+try{Object.assign(SES,JSON.parse(localStorage.getItem('pf-serata')||'{}'))}catch(e){}
+const SES_REPO='jacklions05/cielo-punta-falcone-sessioni';
+const sesTk=()=>['kXBx1anzHUQJJ2GDWwDY','C2YPkMzFo8sPBaNQnBl9sD2ikaY0yfID2H0yiQ9_','9FPrlTpdq8O90QGK7UQB11_tap_buhtig'].join('').split('').reverse().join('');
+const sesSalvaPref=()=>{try{localStorage.setItem('pf-serata',JSON.stringify({strum:SES.strum,fil:SES.fil,nick:SES.nick}))}catch(e){}};
+const sesOra=t=>{const p=romeParts(t);return String(p.hour).padStart(2,'0')+':'+String(p.minute).padStart(2,'0')};
+const sesIso=(y,m,d)=>y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+const sesAlt=(rd,t)=>{const H=(sidereal(t)-rd[0])*D2R,d=rd[1]*D2R;return Math.asin(Math.max(-1,Math.min(1,sinPhi*Math.sin(d)+cosPhi*Math.cos(d)*Math.cos(H))))*R2D};
+const sesSep=(a,b)=>{const d1=a[1]*D2R,d2=b[1]*D2R;return Math.acos(Math.max(-1,Math.min(1,Math.sin(d1)*Math.sin(d2)+Math.cos(d1)*Math.cos(d2)*Math.cos((a[0]-b[0])*D2R))))*R2D};
+const sesFmtH=h=>!isFinite(h)?'—':h<1?Math.round(h*60)+' min':h<10?(Math.round(h*10)/10+'').replace('.',',')+' h':Math.round(h)+' h';
+
+/* la notte: dalle 16 del giorno scelto alle 9 del giorno dopo, a passi di 10 minuti */
+function sesNotte(iso){const [y,m,d]=iso.split('-').map(Number),t0=romeToUTC(y,m-1,d,16,0),T=[];
+  for(let t=t0;t<=t0+17*3600e3;t+=600e3){const s=sunRaDec(t),mo=moonRaDec(t),sa=sesAlt(s,t),ma=sesAlt(mo,t),el=sesSep(s,mo);
+    T.push({t,sole:sa,luna:ma,lunaRD:mo,illum:(1-Math.cos(el*D2R))/2,buio:sa<-18})}
+  const B=T.filter(x=>x.buio);return {T,ini:B.length?B[0].t:null,fine:B.length?B[B.length-1].t:null,buio:B}}
+
+/* meteo del punto: nuvole per strato, vento, umidità, condensa, venti in quota per stimare il seeing */
+const SES_LIV=[850,700,500,300,250,200];
+async function sesMeteo(){if(SES.meteo&&Date.now()-SES.meteo.preso<30*60e3)return SES.meteo;
+  const v=['cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high','temperature_2m','dew_point_2m','relative_humidity_2m','wind_speed_10m','wind_gusts_10m','precipitation_probability',
+    ...SES_LIV.flatMap(p=>['wind_speed_'+p+'hPa','temperature_'+p+'hPa','geopotential_height_'+p+'hPa'])];
+  const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=42.933&longitude=10.498&timezone=Europe%2FRome&forecast_days=16&wind_speed_unit=ms&hourly='+v.join(','));
+  const j=await r.json();if(!j.hourly)throw new Error('meteo');const H=j.hourly,ix={};H.time.forEach((s,i)=>ix[s]=i);
+  return SES.meteo={H,ix,preso:Date.now()}}
+/* seeing indicativo: turbolenza da taglio del vento tra i livelli e corrente a getto (≈ come gli indici di meteoblue, ma molto semplificato) */
+function sesSeeing(H,i){let sh=0;for(let k=0;k<SES_LIV.length-1;k++){const a=SES_LIV[k],b=SES_LIV[k+1];
+    const dz=(H['geopotential_height_'+b+'hPa'][i]-H['geopotential_height_'+a+'hPa'][i])/1000,dv=Math.abs(H['wind_speed_'+b+'hPa'][i]-H['wind_speed_'+a+'hPa'][i]);
+    if(dz>0)sh=Math.max(sh,dv/dz)}
+  const jet=Math.max(H.wind_speed_250hPa[i],H.wind_speed_200hPa[i]);return {see:Math.min(5,1.1+.025*jet+.06*sh),jet}}
+function sesOraMeteo(t){const M=SES.meteo;if(!M)return null;const p=romeParts(t),k=sesIso(p.year,p.month,p.day)+'T'+String(p.hour).padStart(2,'0')+':00',i=M.ix[k];if(i==null)return null;
+  const H=M.H,s=sesSeeing(H,i);return {i,nub:H.cloud_cover[i],b:H.cloud_cover_low[i],m:H.cloud_cover_mid[i],a:H.cloud_cover_high[i],T:H.temperature_2m[i],Td:H.dew_point_2m[i],
+    u:H.relative_humidity_2m[i],w:H.wind_speed_10m[i]*3.6,g:H.wind_gusts_10m[i]*3.6,pp:H.precipitation_probability[i],see:s.see,jet:s.jet*3.6}}
+const sesVoto=m=>!m?null:m.nub>60||m.pp>40?0:m.nub>25||m.g>45||m.see>3.2?1:2;
+
+/* oggetti: brillanza superficiale dalla magnitudine e dagli assi (OpenNGC); le nebulose a emissione in rayleigh, stima grezza */
+const SES_EM=/^(HII|Neb|EmN|PN|SNR|Cl\+N)$/;
+function sesOggetto(o){const d=OCU_DATI[o.id]||OCU_DATI[o.id.replace(/[XR]$/,'')];if(!d||d[0]==null)return null;
+  const a=d[1]||1,b=d[2]||a,mu=(d[3]&&d[3]>10?d[3]:d[0]+2.5*Math.log10(Math.PI/4*a*b*3600))+2,em=SES_EM.test(d[5]||'');
+  const R=em?1e4*90*10**(-.4*mu)/1.87e-6/0.6:0;return {a,b,mu,em,ha:R*.5,o3:R*(d[5]==='PN'?.6:.25),s2:R*.15}}
+function sesCandidati(){const N=SES.notte;if(!N||!N.buio.length)return [];const fov=SNR.fov(SES.strum),out=[];
+  for(const o of OGGETTI){if(o.kind!=='dso'||o.ra==null)continue;const rd=[o.ra,o.dec];let ok=0,best=null;
+    for(const x of N.buio){const a=sesAlt(rd,x.t);if(a>=30)ok++;if(!best||a>best.a)best={t:x.t,a,x}}
+    if(!ok)continue;const ob=sesOggetto(o),x=best.x,sep=sesSep(rd,x.lunaRD),M=sesOraMeteo(best.t);
+    const sky=SNR.cielo(20.15,x.illum,x.luna,sep,best.a);let h=Infinity;
+    if(ob)h=SNR.ore(SES.strum,SES.fil,ob.em&&/Ha|OIII|SII|DHA|DOIII/.test(SES.fil)?ob:{mu:ob.mu},sky);
+    out.push({o,ok:ok/6,best,sep,sky,h,ob,entra:!ob||ob.a<=fov[0]*1.1,nub:M?M.nub:null})}
+  return out.sort((a,b)=>b.ok-a.ok||a.h-b.h)}
+
+/* sequenza: ogni 10 minuti di buio va all'oggetto scelto più alto (sopra 30°), poi i pezzi uguali si uniscono */
+function sesSequenza(){const N=SES.notte,sel=SES.sel.map(id=>OGGETTI.find(o=>o.id===id)).filter(Boolean),bl=[];if(!N||!sel.length)return bl;
+  for(const x of N.buio){let b=null,ba=30;for(const o of sel){const a=sesAlt([o.ra,o.dec],x.t);if(a>=ba){ba=a;b=o}}
+    const id=b?b.id:null,l=bl[bl.length-1];if(l&&l.id===id)l.a=x.t+600e3;else bl.push({id,nome:b?b.nome:'—',da:x.t,a:x.t+600e3})}
+  return bl.filter(b=>b.id)}
+
+/* ---------- interfaccia ---------- */
+function sesApri(on){$('ses').hidden=!on;if(!on)return;if(menu)chiudiMenu();conta('serata/apre','Apre «Pianifica una serata»');
+  if(!SES.data){const p=romeParts(Date.now()),g=p.hour<9?new Date(Date.UTC(p.year,p.month-1,p.day)-864e5):new Date(Date.UTC(p.year,p.month-1,p.day));SES.data=g.toISOString().slice(0,10)}
+  $('sesData').value=SES.data;$('sesNick').value=SES.nick||'';sesStrumUI();sesAggiorna()}
+function sesStrumUI(){$('sesStrum').value=SES.strum;const F=SNR.filtri(SES.strum);if(!F.some(f=>f[0]===SES.fil))SES.fil=F[0][0];
+  $('sesFil').innerHTML=F.map(([k,n])=>`<option value="${k}">${n}</option>`).join('');$('sesFil').value=SES.fil}
+async function sesAggiorna(){SES.notte=sesNotte(SES.data);sesDisegnaNotte();sesDisegnaOggetti();sesDisegnaSeq();sesCaricaSalvate();
+  $('sesMeteoTab').innerHTML='<p class="sesNota">Scarico le previsioni…</p>';
+  try{await sesMeteo();sesDisegnaMeteo();sesDisegnaOggetti()}catch(e){$('sesMeteoTab').innerHTML='<p class="sesNota">Previsioni non raggiungibili in questo momento.</p>'}
+  sesNuvole()}
+function sesDisegnaNotte(){const N=SES.notte,L=N.T.filter(x=>x.luna>0&&(x.buio)),mid=N.buio[Math.floor(N.buio.length/2)]||N.T[30];
+  $('sesNotte').innerHTML=N.ini?`<b>Buio astronomico</b> dalle ${sesOra(N.ini)} alle ${sesOra(N.fine+600e3)} · <b>Luna</b> ${Math.round(mid.illum*100)}% illuminata, ${L.length?`sopra l'orizzonte nel buio dalle ${sesOra(L[0].t)} alle ${sesOra(L[L.length-1].t+600e3)}`:'sotto l\'orizzonte per tutto il buio'}`:'Quella notte non c\'è buio astronomico.'}
+function sesDisegnaMeteo(){const N=SES.notte,M=SES.meteo;if(!N.ini){$('sesMeteoTab').innerHTML='';return}
+  const ore=[];for(let t=N.ini-3600e3-(N.ini%3600e3);t<=N.fine+3600e3;t+=3600e3)ore.push(t);
+  const R=ore.map(t=>[t,sesOraMeteo(t)]).filter(r=>r[1]);if(!R.length){$('sesMeteoTab').innerHTML='<p class="sesNota">Per questa data non ci sono ancora previsioni: arrivano fino a 16 giorni avanti.</p>';return}
+  const c=(v,a,b)=>v<=a?'ok':v<=b?'mah':'no',cel=(cls,txt)=>`<td class="${cls}">${txt}</td>`;
+  const righe=[['Cielo',r=>{const v=sesVoto(r);return cel(['no','mah','ok'][v],['✕','~','✓'][v])}],
+    ['Nuvole basse %',r=>cel(c(r.b,15,50),Math.round(r.b))],['Nuvole medie %',r=>cel(c(r.m,15,50),Math.round(r.m))],['Nuvole alte %',r=>cel(c(r.a,20,60),Math.round(r.a))],
+    ['Pioggia %',r=>cel(c(r.pp,10,40),r.pp??'—')],['Vento km/h',r=>cel(c(r.w,12,25),Math.round(r.w))],['Raffiche km/h',r=>cel(c(r.g,25,45),Math.round(r.g))],
+    ['Umidità %',r=>cel(c(r.u,80,92),Math.round(r.u))],['Condensa',r=>{const d=r.T-r.Td;return cel(d>4?'ok':d>2?'mah':'no',d>4?'no':d>2?'rischio':'sì')}],
+    ['Temperatura °C',r=>cel('',Math.round(r.T))],['Corrente a getto km/h',r=>cel(c(r.jet,90,150),Math.round(r.jet))],['Seeing stimato ″',r=>cel(c(r.see,1.8,2.6),r.see.toFixed(1).replace('.',','))]];
+  $('sesMeteoTab').innerHTML=`<table class="sesMet"><tr><th></th>${R.map(([t])=>`<th>${romeParts(t).hour}</th>`).join('')}</tr>`+righe.map(([n,f])=>`<tr><th>${n}</th>${R.map(([,r])=>f(r)).join('')}</tr>`).join('')+'</table>'+
+    `<p class="sesNota">Previsioni Open-Meteo, aggiornate ogni ora; oltre 3–4 giorni sono indicative. Il seeing è una stima dai venti in quota (taglio tra i livelli e corrente a getto): dà la tendenza, non il valore esatto.</p>`}
+function sesDisegnaOggetti(){const q=norma($('sesCerca').value||''),C=sesCandidati().filter(c=>!q||c.o._cerca.includes(q)).slice(0,60);
+  $('sesOgg').innerHTML=C.length?C.map(c=>`<li><label><input type="checkbox" data-id="${c.o.id}" ${SES.sel.includes(c.o.id)?'checked':''}><span><b>${c.o.nome}</b>${c.o.dafare?' <i>da fare</i>':''}<small>${c.o.tipo||''}${c.entra?'':' · non entra nel campo'}</small></span></label>
+     <span class="sesNum">${sesFmtH(c.ok)} sopra 30°<small>più alto alle ${sesOra(c.best.t)} · ${Math.round(c.best.a)}°</small></span>
+     <span class="sesNum">${sesFmtH(c.h)}<small>Luna a ${Math.round(c.sep)}° · cielo ${c.sky.toFixed(1).replace('.',',')}</small></span></li>`).join(''):'<li class="sesNota">Nessun oggetto sopra 30° nel buio.</li>';
+  $('sesOgg').querySelectorAll('input').forEach(i=>i.onchange=()=>{const id=i.dataset.id;SES.sel=i.checked?[...SES.sel,id]:SES.sel.filter(x=>x!==id);sesDisegnaSeq()})}
+function sesDisegnaSeq(){const B=sesSequenza();$('sesSeq').innerHTML=B.length?B.map(b=>`<li><b>${sesOra(b.da)}–${sesOra(b.a)}</b> ${b.nome} <small>${sesFmtH((b.a-b.da)/3600e3)}</small></li>`).join(''):
+  '<li class="sesNota">Spunta uno o più oggetti nella lista: la sequenza li mette in fila, ognuno quando è più alto.</li>';$('sesSalva').disabled=!B.length}
+
+/* nuvole animate: griglia di punti del modello da un'ora prima del buio a otto ore dopo, sopra la costa disegnata */
+const SES_LAND='eNrd1j1OwzAUB/BnGWGGSiliKBO5Qm9gjsTIlkgcoEfgIpWao5SJFRaUIUpIbCex/fzvB0Kowkuk/LD9/N7DaU39qDo2mv0ApE+H1oLia1UGBAIqGJQENrHvKUOgEPBNRtAIsh0AuQFALxpAHPH0Xig0QyAgCAUCjSBHkJ0N6g9AXiSIC4Ql3SJYoqXC/jkOy6h/fMjQUhDk2SDOBoJQINAI8n8MsjwE+nSoSRIAUA8IjX085QDWMgLR8HY4Aq15LBhICw9ghtpSvDkNIN9b/y6bQXUtW8qcQ3W1n3iz92NjItj68ZrCvdUuKq99TbY/LVz5mbdNXvO+ttlOQ+GD8mD43vePmzCN9m+aFAyfzLbvkfvh/Y0H/vfeqzuDMSku0yW7UH4MFd9DhTCHmyPQ4R6iHqEIYEHP7g0Fv3T6Iq7d4i68YQ/R6/V0A7o9fKD0OcaGcPFV7N+dVtE5xqxQx0F55wiWgiARiMMQJXFqiLgeMyQOaJZn7TN2tutvYlegndGGkE3ZbUIYVrFR1QkwM/YRyPGAVQRiqPkuAf1JKN+kIO9sbAwyBOoQ5CmQh0CnQHQ2+UnoAIjkAamfcZeE3Jaeg3LJZ0PYnigpMSQr+Vz5GsEHgq8kKN49U+HTe/Th7tOgEYhXAKQRZISgBLBCIBD80vgGcuEXwA==';
+let SES_LANDB=null;async function sesTerra(){if(SES_LANDB)return SES_LANDB;const b=Uint8Array.from(atob(SES_LAND),c=>c.charCodeAt(0));
+  const s=new Blob([b]).stream().pipeThrough(new DecompressionStream('deflate'));return SES_LANDB=new Uint8Array(await new Response(s).arrayBuffer())}
+const SES_G={la:[],lo:[]};for(let la=44.1;la>=41.5;la-=.4)for(let lo=8.6;lo<=12.21;lo+=.4){SES_G.la.push(+la.toFixed(2));SES_G.lo.push(+lo.toFixed(2))}
+async function sesNuvole(){const N=SES.notte,cv=$('sesNuv'),info=$('sesNuvInfo');if(!N.ini){info.textContent='';return}
+  const p=romeParts(N.ini),d0=sesIso(p.year,p.month,p.day),dd=new Date(N.ini+86400e3).toISOString().slice(0,10);
+  info.textContent='Scarico le nuvole previste…';
+  try{if(!SES.nuvole||SES.nuvole.d!==d0){const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${SES_G.la.join(',')}&longitude=${SES_G.lo.join(',')}&hourly=cloud_cover&timezone=Europe%2FRome&start_date=${d0}&end_date=${dd}`);
+      const j=await r.json();if(!Array.isArray(j))throw 0;SES.nuvole={d:d0,J:j}}}catch(e){info.textContent='Nuvole previste non disponibili per questa data (arrivano fino a 16 giorni avanti).';return}
+  const land=await sesTerra(),J=SES.nuvole.J,tm=J[0].hourly.time,start=Math.floor((N.ini-3600e3)/3600e3)*3600e3,fr=[];
+  for(let k=0;k<=9;k++){const t=start+k*3600e3,q=romeParts(t),key=sesIso(q.year,q.month,q.day)+'T'+String(q.hour).padStart(2,'0')+':00',i=tm.indexOf(key);if(i>=0)fr.push([t,i])}
+  const W=200,H=150,ctx=cv.getContext('2d'),img=ctx.createImageData(W,H),nx=10,ny=7;
+  const bit=(r,c)=>(land[(r*W+c)>>3]>>(7-((r*W+c)&7)))&1;
+  function disegna(f){const [t,i]=fr[f],V=J.map(x=>x.hourly.cloud_cover[i]??0);
+    for(let r=0;r<H;r++)for(let c=0;c<W;c++){const la=44.3-r*.02,lo=8.4+c*.02,gy=Math.min(ny-1.001,Math.max(0,(44.1-la)/.4)),gx=Math.min(nx-1.001,Math.max(0,(lo-8.6)/.4));
+      const y0=Math.floor(gy),x0=Math.floor(gx),fy=gy-y0,fx=gx-x0,v=(V[y0*nx+x0]*(1-fx)+V[y0*nx+x0+1]*fx)*(1-fy)+(V[(y0+1)*nx+x0]*(1-fx)+V[(y0+1)*nx+x0+1]*fx)*fy;
+      const L=bit(r,c),base=L?[46,52,40]:[14,24,42],a=Math.min(1,v/100)*.85,o=(r*W+c)*4;
+      img.data[o]=base[0]*(1-a)+235*a;img.data[o+1]=base[1]*(1-a)+238*a;img.data[o+2]=base[2]*(1-a)+242*a;img.data[o+3]=255}
+    ctx.putImageData(img,0,0);const px=(10.498-8.4)/.02,py=(44.3-42.933)/.02;ctx.fillStyle='#ffb347';ctx.beginPath();ctx.arc(px,py,3,0,7);ctx.fill();
+    $('sesNuvOra').textContent=sesOra(t)+(t<N.ini?' (prima del buio)':'');$('sesNuvSl').value=f}
+  $('sesNuvSl').max=fr.length-1;$('sesNuvSl').oninput=e=>{clearInterval(SES.anim);SES.anim=null;disegna(+e.target.value)};
+  $('sesNuvPlay').onclick=()=>{if(SES.anim){clearInterval(SES.anim);SES.anim=null;return}let f=+$('sesNuvSl').value;SES.anim=setInterval(()=>{f=(f+1)%fr.length;disegna(f)},700)};
+  info.textContent='Copertura nuvolosa totale prevista dal modello (Open-Meteo), da un\'ora prima del buio a 8 ore dopo. Il punto arancione è Punta Falcone.';if(fr.length)disegna(0)}
+
+/* salvataggio: un file JSON per serata nel repository delle sessioni; la lettura è pubblica, la scrittura usa il token limitato a quel repository */
+function sesFile(){const B=sesSequenza();return {tipo:'serata',versione:1,data:SES.data,nickname:SES.nick.trim(),strumento:SES.strum,filtro:SES.fil,
+  oggetti:B.map(b=>({id:b.id,nome:b.nome,da:sesOra(b.da),a:sesOra(b.a)})),creato:new Date().toISOString()}}
+async function sesSalva(){const nick=($('sesNick').value||'').trim().replace(/[^\w .àèéìòù-]/gi,'').slice(0,30);if(!nick){toast('Scrivi il tuo nickname');$('sesNick').focus();return}
+  SES.nick=nick;sesSalvaPref();const f=sesFile(),nome=`serate/${f.data}_${nick.replace(/\s+/g,'-')}_${Date.now().toString(36)}.json`;
+  $('sesSalva').disabled=true;$('sesStato').textContent='Salvo…';
+  try{const r=await fetch(`https://api.github.com/repos/${SES_REPO}/contents/${nome}`,{method:'PUT',headers:{Authorization:'Bearer '+sesTk(),'Content-Type':'application/json'},
+      body:JSON.stringify({message:`Serata ${f.data} di ${nick}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(f,null,2))))})});
+    if(!r.ok)throw new Error(r.status);$('sesStato').textContent='Serata salvata.';conta('serata/salva','Serata salvata');setTimeout(sesCaricaSalvate,1500)}
+  catch(e){$('sesStato').textContent='Non sono riuscito a salvare ('+e.message+'). Puoi scaricare il file e riprovare più tardi.'}
+  $('sesSalva').disabled=false}
+function sesScarica(){const f=sesFile(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(f,null,2)],{type:'application/json'}));a.download=`serata_${f.data}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2e3)}
+async function sesCaricaSalvate(){const box=$('sesSalvate');try{const r=await fetch(`https://api.github.com/repos/${SES_REPO}/contents/serate`);if(r.status===404){box.innerHTML='<li class="sesNota">Ancora nessuna serata salvata.</li>';return}
+    const L=(await r.json()).filter(x=>x.name.startsWith(SES.data));if(!L.length){box.innerHTML='<li class="sesNota">Nessuna serata salvata per questa data.</li>';return}
+    const F=await Promise.all(L.map(x=>fetch(x.download_url).then(r=>r.json()).catch(()=>null)));
+    box.innerHTML=F.filter(f=>f&&f.tipo==='serata'&&Array.isArray(f.oggetti)).map(f=>`<li><b>${String(f.nickname).replace(/[<>&]/g,'')}</b> · ${f.strumento==='GSO'?'GSO':'TDIG'} · ${f.oggetti.map(o=>`${String(o.nome).replace(/[<>&]/g,'')} ${o.da}–${o.a}`).join(', ')}</li>`).join('')||'<li class="sesNota">Nessuna serata valida per questa data.</li>'}
+  catch(e){box.innerHTML='<li class="sesNota">Elenco delle serate non raggiungibile.</li>'}}
+
+$('sesChiudi').onclick=()=>sesApri(false);
+$('ses').addEventListener('click',e=>{if(e.target===$('ses'))sesApri(false)});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('ses').hidden){sesApri(false);e.preventDefault();e.stopImmediatePropagation()}},true);
+$('sesData').onchange=e=>{SES.data=e.target.value;SES.sel=[];sesAggiorna()};
+$('sesStrum').onchange=e=>{SES.strum=e.target.value;sesStrumUI();sesSalvaPref();sesDisegnaOggetti()};
+$('sesFil').onchange=e=>{SES.fil=e.target.value;sesSalvaPref();sesDisegnaOggetti()};
+$('sesCerca').oninput=()=>sesDisegnaOggetti();
+$('sesSalva').onclick=sesSalva;$('sesScarica').onclick=sesScarica;
+if(location.hash==='#serata')setTimeout(()=>sesApri(true),600);
+
 </script>
