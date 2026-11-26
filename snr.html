@@ -1,0 +1,746 @@
+<!doctype html><html lang="it" data-theme="dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>Calcolatore SNR · TDIG e GSO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: banco di controllo (oggetto, cielo e Luna, config A | B), verdetto, grafici, poi la spiegazione */
+:root{
+  --bg:#f3f4f7; --panel:#ffffff; --fg:#141a26; --muted:#5b6475; --line:#d9dde6;
+  --a:#c76a12; --b:#1f7a8c; --target:#7a35e8; --warn:#b42318; --grid:rgba(20,26,38,.08);
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Barlow",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#0c1018; --panel:#141a25; --fg:#e6e9f0; --muted:#8f98aa; --line:#263043;
+  --a:#f0a04b; --b:#4fc1d6; --target:#b18cff; --warn:#ff8a7a; --grid:rgba(230,233,240,.08); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1100px;margin:0 auto;padding-block:20px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:grid;gap:18px}
+h1{font-family:var(--f-display);font-weight:600;font-size:2rem;letter-spacing:.01em;margin:0;text-wrap:balance}
+h2.sec{font-family:var(--f-display);font-weight:600;font-size:1.6rem;margin:18px 0 0;text-wrap:balance}
+.sub{color:var(--muted);margin:2px 0 0;max-width:70ch}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.cfg{border-top:4px solid var(--c)}
+.cfg h2{font-family:var(--f-display);font-weight:600;font-size:1.25rem;margin:0 0 10px;color:var(--c);letter-spacing:.02em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 12px;margin-top:10px}
+.gridobj{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px 12px}
+.mt{margin-top:10px}
+label{display:grid;gap:3px;font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);min-width:0}
+select,input{font:500 15px var(--f-mono);color:var(--fg);background:var(--bg);border:1px solid var(--line);
+  border-radius:6px;padding:7px 8px;width:100%;min-width:0}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--target);outline-offset:1px}
+.range{display:flex;gap:8px;align-items:center}
+.range input[type=range]{flex:1;padding:0;accent-color:var(--c,var(--target))}
+.range output{font-family:var(--f-mono);min-width:4.5ch;text-align:right;color:var(--fg);text-transform:none;letter-spacing:0}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.presets .grp{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);align-self:center;margin-right:2px}
+.presets .brk{flex-basis:100%;height:0}
+.presets button{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--bg);color:var(--fg);
+  border-radius:999px;padding:5px 11px;cursor:pointer}
+.presets button[aria-pressed="true"]{border-color:var(--target);color:var(--target)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:12px}
+.stat{font-family:var(--f-mono);font-size:.78rem;color:var(--muted)}
+.stat b{display:block;font-size:1.15rem;font-weight:500;color:var(--fg);font-variant-numeric:tabular-nums}
+.stat b.bad{color:var(--warn)}
+.verdict{font-family:var(--f-display);font-size:1.5rem;font-weight:600;margin:0}
+.verdict span{color:var(--win)}
+.chartbox{position:relative;height:330px}
+.chartbox.short{height:270px}
+.chartbox.tall{height:440px}
+.chart-title{font-family:var(--f-display);font-weight:600;font-size:1.15rem;margin:0 0 2px}
+.chart-note{color:var(--muted);font-size:.88rem;margin:0 0 8px;max-width:75ch}
+.explain{display:grid;gap:14px}
+.explain .panel h3{font-family:var(--f-display);font-weight:600;font-size:1.2rem;margin:0 0 4px}
+.explain p{margin:6px 0;max-width:72ch}
+.explain .step{font-weight:600;margin:12px 0 0}
+.explain .eq{overflow-x:auto;padding:2px 0}
+.explain .syms{color:var(--muted);font-size:.9rem;margin:4px 0 0;max-width:75ch}
+.objlist{display:grid;gap:10px;margin-top:6px}
+.objlist div{max-width:75ch}
+.objlist b{font-weight:600}
+table.num{border-collapse:collapse;font-family:var(--f-mono);font-size:.84rem;font-variant-numeric:tabular-nums}
+table.num td,table.num th{border-bottom:1px solid var(--line);padding:5px 14px 5px 0;text-align:left;white-space:nowrap}
+table.num th{color:var(--muted);font-weight:500}
+table.num td.a{color:var(--a)} table.num td.b{color:var(--b)}
+.tbl{overflow-x:auto}
+.daMappa{border-color:var(--target)}
+@media (max-width:480px){.chartbox{height:270px}.grid3{grid-template-columns:1fr 1fr}}
+</style></head><body>
+
+<div class="wrap">
+  <header>
+    <h1>Quale setup arriva prima al segnale</h1>
+    <p class="sub">I tempi sono in minuti, ore o notti (da 8 ore di buio) a seconda della durata. Confronta due configurazioni telescopio + camera + filtro e vedi quanto tempo serve a ciascuna per staccare un oggetto dal fondo cielo, con o senza Luna e con diversi livelli di inquinamento luminoso. Sotto i grafici trovi come funziona il calcolo e cosa sono gli oggetti di esempio.</p>
+    <p class="sub" id="daMappa" hidden></p>
+  </header>
+
+  <section class="panel" aria-label="Oggetto">
+    <p class="chart-title">Oggetto</p>
+    <div class="presets" id="presets" role="group" aria-label="Oggetti di esempio"></div>
+    <div class="gridobj">
+      <label>Tipo di oggetto
+        <select id="objType">
+          <option value="point">Puntiforme (supernova, stella)</option>
+          <option value="ext">Esteso a spettro continuo (galassie, polveri)</option>
+          <option value="em">Nebulosa a emissione (righe)</option>
+        </select>
+      </label>
+      <label id="lblMag">Magnitudine oggetto<input id="mag" type="number" step="0.1" value="17.0"></label>
+      <label id="lblMt" hidden>Magnitudine totale<input id="mtot" type="number" step="0.1" value="5.7"></label>
+      <label id="lblSa" hidden>Asse maggiore (′)<input id="sa" type="number" step="0.5" min="0.1" value="70.8"></label>
+      <label id="lblSb" hidden>Asse minore (′)<input id="sb" type="number" step="0.5" min="0.1" value="41.7"></label>
+      <label id="lblDm" hidden>Parte da mostrare (mag sotto la media)<input id="dm" type="number" step="0.5" value="1.5"></label>
+      <label id="lblMu" hidden>Brillanza usata nel calcolo (mag/″²)<input id="mu" type="number" step="0.1" value="24.5"></label>
+      <label id="lblHa" hidden>Hα (rayleigh)<input id="ha" type="number" step="1" min="0" value="600"></label>
+      <label id="lblO3" hidden>OIII (rayleigh)<input id="o3" type="number" step="1" min="0" value="120"></label>
+      <label id="lblS2" hidden>SII (rayleigh)<input id="s2" type="number" step="1" min="0" value="150"></label>
+      <label id="lblMode" hidden>Confronto per
+        <select id="mode"><option value="area">Stessa area di cielo</option><option value="pixel">Pixel finale (dopo binning)</option></select>
+      </label>
+      <label id="lblElem" hidden>Lato area di misura (″)<input id="elem" type="number" step="0.5" min="0.5" value="2"></label>
+      <label>Seeing FWHM (″)<input id="seeing" type="number" step="0.1" min="0.8" value="2.5"></label>
+      <label>SNR obiettivo<input id="target" type="number" step="1" min="2" value="10"></label>
+      <label>Tempo morto per posa (s)<input id="oh" type="number" step="1" min="0" value="4"></label>
+      <label>Pose minime nello stack<input id="nmin" type="number" step="1" min="1" value="10"></label>
+      <label>Pose buone (%)<input id="good" type="number" step="5" min="5" max="100" value="75"></label>
+    </div>
+    <p class="chart-note mt" id="muNote"></p>
+  </section>
+
+  <section class="panel" aria-label="Cielo e Luna">
+    <p class="chart-title">Cielo e Luna</p>
+    <div class="gridobj">
+      <label>Classe Bortle (indicativa)<select id="bortle"></select></label>
+      <label>Cielo senza Luna (mag/″²)<input id="sqm" type="number" step="0.1" min="16" max="22.5" value="20.15"></label>
+      <label>Luna illuminata (%)
+        <div class="range"><input id="illum" type="range" min="0" max="100" step="5" value="0"><output id="illumO">0</output></div>
+      </label>
+      <label>Altezza Luna (°)<input id="moonAlt" type="number" step="5" min="-90" max="90" value="35"></label>
+      <label>Distanza Luna–oggetto (°)<input id="sep" type="number" step="5" min="10" max="180" value="60"></label>
+      <label>Altezza oggetto (°)<input id="objAlt" type="number" step="5" min="10" max="90" value="60"></label>
+    </div>
+    <p class="chart-note mt" id="skyNote"></p>
+  </section>
+
+  <div class="row" id="cfgRow"></div>
+
+  <section class="panel" aria-live="polite">
+    <p class="verdict" id="verdict"></p>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section class="panel">
+    <p class="chart-title">SNR in funzione del tempo di ripresa</p>
+    <p class="chart-note">La riga tratteggiata è l'SNR obiettivo. Il tempo è di orologio e include il tempo morto tra una posa e l'altra.</p>
+    <div class="chartbox"><canvas id="c1" aria-label="SNR contro ore"></canvas></div>
+  </section>
+
+  <div class="row">
+    <section class="panel">
+      <p class="chart-title">Tempo necessario al variare della fase lunare</p>
+      <p class="chart-note">Stesso cielo e stessa posizione della Luna impostati sopra; cambia solo quanta Luna è illuminata. Scala logaritmica.</p>
+      <div class="chartbox short"><canvas id="c4" aria-label="Ore contro fase lunare"></canvas></div>
+    </section>
+    <section class="panel">
+      <p class="chart-title">Tempo necessario al variare dell'inquinamento luminoso</p>
+      <p class="chart-note">Brillanza del cielo senza Luna: a sinistra cielo cittadino, a destra cielo di montagna. Scala logaritmica.</p>
+      <div class="chartbox short"><canvas id="c5" aria-label="Ore contro fondo cielo"></canvas></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <p class="chart-title">Quanto vale un'ora di posa con la Luna</p>
+    <p class="chart-note">«Tempo» è quanto serve con quella fase. «Peso di un'ora» è il rapporto con la Luna nuova: ×0,2 vuol dire che un'ora con quella Luna vale come 12 minuti senza. Stessa geometria di Luna e oggetto impostata sopra.</p>
+    <div class="tbl"><table class="num" id="moonTable"></table></div>
+  </section>
+
+  <div class="row">
+    <section class="panel">
+      <p class="chart-title">Tempo necessario al variare della posa</p>
+      <p class="chart-note">Il punto evidenziato è la posa scelta. Se la curva è piatta, la durata della posa conta poco.</p>
+      <div class="chartbox short"><canvas id="c2" aria-label="Ore contro durata posa"></canvas></div>
+    </section>
+    <section class="panel">
+      <p class="chart-title">Tempo necessario al variare del binning</p>
+      <p class="chart-note">Con il confronto per stessa area di cielo le barre non cambiano; con quello per pixel finale si accorciano come 1/b².</p>
+      <div class="chartbox short"><canvas id="c3" aria-label="Ore contro binning"></canvas></div>
+    </section>
+  </div>
+
+  <h2 class="sec">Un fattore alla volta</h2>
+  <p class="sub">Ogni grafico cambia un solo parametro e tiene fermi tutti gli altri come li hai impostati sopra.</p>
+
+  <section class="panel">
+    <p class="chart-title">Tempo necessario per ogni oggetto di esempio</p>
+    <p class="chart-note">Stessi strumenti, filtri, pose, cielo e Luna; cambia solo l'oggetto. Le nebulose a emissione sono qui viste con il filtro scelto per ciascuna configurazione. Scala logaritmica.</p>
+    <div class="chartbox tall"><canvas id="c7" aria-label="Ore per oggetto"></canvas></div>
+  </section>
+
+  <div class="row">
+    <section class="panel">
+      <p class="chart-title">Tempo necessario con ogni filtro</p>
+      <p class="chart-note">Tutti i filtri disponibili per la camera di ciascuna configurazione, sull'oggetto scelto. Un filtro senza barra non vede l'oggetto. Scala logaritmica.</p>
+      <div class="chartbox tall"><canvas id="c8" aria-label="Ore per filtro"></canvas></div>
+    </section>
+    <section class="panel">
+      <p class="chart-title">Tempo necessario al variare del seeing</p>
+      <p class="chart-note">Conta per le sorgenti puntiformi: con seeing peggiore la stella si allarga e raccoglie più cielo. Per gli oggetti estesi misurati su un'area fissata la curva è piatta. Scala logaritmica.</p>
+      <div class="chartbox tall"><canvas id="c9" aria-label="Ore contro seeing"></canvas></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <p class="chart-title">Campionamento al variare del binning</p>
+    <p class="chart-note">Pixel finali per FWHM del seeing impostato. Sotto 2 le stelle diventano quadrate e si perde dettaglio; sopra 4 il pixel è più piccolo del necessario e conviene il binning.</p>
+    <div class="chartbox short"><canvas id="c10" aria-label="Campionamento contro binning"></canvas></div>
+  </section>
+
+  <section class="panel">
+    <p class="chart-title">Tempo necessario al variare della temperatura del sensore</p>
+    <p class="chart-note">La corrente di buio raddoppia circa ogni 6 °C. Pesa solo quando è paragonabile al fondo cielo per pixel: in banda larga la curva resta piatta, in banda stretta sale presto. Scala logaritmica.</p>
+    <div class="chartbox short"><canvas id="c6" aria-label="Ore contro temperatura sensore"></canvas></div>
+  </section>
+
+  <h2 class="sec">Come funziona il calcolo</h2>
+  <div class="explain">
+    <section class="panel">
+      <h3>1. Quanti elettroni produce la luce</h3>
+      <p class="step">Area utile dello specchio</p>
+      <div class="eq">$$A_{\rm eff}=\frac{\pi D^2}{4}\left(1-\varepsilon^2\right)$$</div>
+      <p class="syms">\(D\) è il diametro del primario, \(\varepsilon\) l'ostruzione lineare (diametro del secondario con il suo paraluce diviso per \(D\)). L'area persa va come \(\varepsilon^2\): con il 47% lineare si perde il 22% della luce.</p>
+      <p class="step">Elettroni al secondo, integrati sulla lunghezza d'onda</p>
+      <div class="eq">$$\dot N_e=A_{\rm eff}\,\tau\int F(\lambda)\,T_f(\lambda)\sum_c \phi_c\,\mathrm{QE}_c(\lambda)\,d\lambda$$</div>
+      <p class="syms">\(F(\lambda)\) è lo spettro della sorgente in fotoni/s/cm²/nm, \(T_f(\lambda)\) la trasmissione del filtro (0 fuori dalla banda), \(\tau=0{,}85\) la trasmissione di specchi e finestre. La somma è sui tipi di pixel \(c\) usati per il canale: per una mono c'è un solo tipo con \(\phi=1\); per una camera a colori i pixel rossi sono \(\phi_R=1/4\), i verdi \(\phi_G=1/2\), i blu \(\phi_B=1/4\). \(\mathrm{QE}_c(\lambda)\) è l'efficienza quantica di quel pixel, matrice colore compresa. Questa è la parte che rende il calcolo diverso per ogni filtro e ogni camera.</p>
+    </section>
+
+    <section class="panel">
+      <h3>2. Spettri: continuo e righe</h3>
+      <p class="step">Sorgenti a spettro continuo (stelle, galassie, polveri, cielo)</p>
+      <div class="eq">$$F_{\rm cont}(\lambda)=10^{4}\,\frac{550}{\lambda}\,10^{-0.4\,m}$$</div>
+      <p class="syms">\(F_{\rm cont}\) in fotoni/s/cm²/nm (per ″² se \(m\) è una brillanza superficiale), \(\lambda\) in nm, \(m\) la magnitudine. È uno spettro piatto in frequenza, con circa 1000 fotoni/s/cm²/Å a 550 nm per magnitudine 0. Anche il fondo cielo, Luna compresa, è trattato come continuo.</p>
+      <p class="step">Nebulose a emissione</p>
+      <div class="eq">$$F_{\rm riga}=1{,}87\cdot10^{-6}\,I_R$$</div>
+      <p class="syms">\(F_{\rm riga}\) in fotoni/s/cm²/″², \(I_R\) la brillanza della riga in rayleigh (1 R = 10⁶/4π fotoni/s/cm²/sr). Le righe considerate sono Hα a 656,3 nm, OIII a 500,7 nm e SII a 672,4 nm. Una riga passa tutta o niente: o cade nella banda del filtro o no.</p>
+      <p>Ecco perché la banda stretta funziona sulle nebulose: il filtro lascia passare tutta la riga ma solo pochi nanometri di cielo. Su una galassia, invece, taglia sia il cielo sia l'oggetto e non conviene.</p>
+    </section>
+
+    <section class="panel">
+      <h3>3. Filtri e camere</h3>
+      <p>Le camere mono usano L, R, G, B, Hα, OIII o SII. Le camere a colori non usano filtri a colori: o nessun filtro, o un dual band Hα + OIII. Con il dual band i due canali si separano in elaborazione: l'Hα cade solo sui pixel rossi, l'OIII sui verdi e un po' sui blu.</p>
+      <p>«Banda equivalente» è quanti nm di continuo arrivano come se l'efficienza fosse del 100%: misura quanto fondo cielo entra. «Resa» è la frazione di fotoni della riga che diventa elettroni nel canale. Valori con filtri a banda stretta da 7 nm:</p>
+      <div class="tbl"><table class="num" id="filterTable"></table></div>
+      <p class="syms">Le curve di efficienza sono quelle tipiche dei sensori Sony IMX571 e IMX455, approssimate: mono con picco circa 91% a 500 nm e circa 65% in Hα; a colori con picco circa 80% nel verde e circa 60% in Hα sui pixel rossi.</p>
+    </section>
+
+    <section class="panel">
+      <h3>4. Segnale, rumore e SNR</h3>
+      <p class="step">Segnale e fondo nell'area di misura</p>
+      <div class="eq">$$S=\dot N_e^{\rm ogg}\,\Omega,\qquad B=\dot N_e^{\rm cielo}\,\Omega$$</div>
+      <p class="syms">\(\dot N_e^{\rm ogg}\) e \(\dot N_e^{\rm cielo}\) sono gli elettroni al secondo per ″² dell'oggetto e del cielo, \(\Omega\) l'area di misura in ″². Per una sorgente puntiforme \(\Omega=\pi(0{,}67\,\mathrm{FWHM})^2\) e il segnale è la magnitudine totale moltiplicata per 0,71, la frazione di luce di una stella gaussiana dentro quel raggio.</p>
+      <p class="step">Pixel letti</p>
+      <div class="eq">$$n_{\rm px}=\frac{\Omega}{s^2}\sum_c\phi_c,\qquad s=206{,}265\,\frac{p}{f}$$</div>
+      <p class="syms">\(n_{\rm px}\) è il numero di pixel che contribuiscono al canale dentro \(\Omega\), \(s\) la scala in ″/px, \(p\) il lato del pixel in µm, \(f\) la focale in mm.</p>
+      <p class="step">SNR dopo un tempo di esposizione \(t\)</p>
+      <div class="eq">$$\mathrm{SNR}(t)=\frac{S\,t}{\sqrt{\left(S+B+n_{\rm px}\,D_c\right)t+n_{\rm px}\,\sigma_{\rm RN}^2\,\dfrac{t}{t_{\rm sub}}}}$$</div>
+      <p class="syms">Le varianze sono: rumore fotonico dell'oggetto e del cielo, rumore della corrente di buio \(D_c\) (e⁻/s per pixel), read noise \(\sigma_{\rm RN}\) pagato una volta per posa. \(t/t_{\rm sub}\) è il numero di pose.</p>
+      <p class="step">Corrente di buio e temperatura</p>
+      <div class="eq">$$D_c(T)=D_0\cdot2^{\,(T-T_0)/T_d}$$</div>
+      <p class="syms">\(T\) è la temperatura del sensore in °C, \(D_0=0{,}0022\) e⁻/s/px il valore dichiarato da ZWO per l'IMX571 a \(T_0=0\) °C, \(T_d\approx6\) °C l'intervallo in cui la corrente raddoppia (valore tipico dei CMOS retroilluminati). Per l'IMX455 è usata la stessa curva. A −10 °C vale circa 0,0007 e⁻/s/px, a +20 °C circa 0,022. La corrente di buio dipende solo da sensore e temperatura, non dal filtro. Cambia invece il suo peso: va confrontata con il fondo cielo per pixel \(B_{\rm px}\), che in banda larga è 50–100 volte più alto che in banda stretta. Il riepilogo mostra la quota \(D_c/(B_{\rm px}+D_c)\) e la segna in rosso sopra il 30%. Il dark frame sottrae il livello medio della corrente di buio, ma non il suo rumore, che resta nell'immagine.</p>
+      <p class="step">Ore di notte per arrivare all'obiettivo</p>
+      <div class="eq">$$t_{\rm obj}=\mathrm{SNR}_{\rm obj}^2\;\frac{S+B+n_{\rm px}\left(D_c+\sigma_{\rm RN}^2/t_{\rm sub}\right)}{S^2}\cdot\frac{t_{\rm sub}+t_{\rm morto}}{t_{\rm sub}}\cdot\frac{1}{f_{\rm buone}}$$</div>
+      <p class="syms">\(\mathrm{SNR}_{\rm obj}\) è l'SNR voluto, \(t_{\rm morto}\) il tempo perso tra due pose, \(f_{\rm buone}\) la frazione di pose che tieni nello stack (le altre si perdono per nuvole, vento, guida, condensa, satelliti). Questa formula disegna tutti i grafici. Il risultato non scende mai sotto \(N_{\min}\,(t_{\rm sub}+t_{\rm morto})\): uno stack ha bisogno di un numero minimo di pose \(N_{\min}\) per eliminare satelliti, raggi cosmici e pixel caldi con il rigetto.</p>
+      <p class="step">Posa minima utile</p>
+      <div class="eq">$$t_{\rm sub}\gtrsim\frac{10\,\sigma_{\rm RN}^2}{B_{\rm px}+D_c(T)}$$</div>
+      <p class="syms">\(B_{\rm px}\) è il fondo cielo in e⁻/s per pixel usato. Oltre questa durata il read noise aggiunge meno del 5% al rumore. In banda larga bastano decine di secondi; in banda stretta il fondo per pixel è 50–100 volte più basso e servono pose da molti minuti.</p>
+    </section>
+
+    <section class="panel">
+      <h3>5. Luna e inquinamento luminoso</h3>
+      <p>La luce della Luna diffusa dall'atmosfera si somma al fondo del cielo buio. Il calcolo usa il modello di Krisciunas e Schaefer (1991), lo standard per la brillanza del cielo con la Luna in banda V.</p>
+      <p class="step">Brillanza aggiunta dalla Luna</p>
+      <div class="eq">$$B_{\rm L}=f(\rho)\,I^*\,10^{-0.4\,k\,X(Z_L)}\left[1-10^{-0.4\,k\,X(Z)}\right]$$</div>
+      <p class="syms">\(B_{\rm L}\) in nanolambert, \(\rho\) la distanza angolare tra Luna e oggetto, \(k=0{,}17\) il coefficiente di estinzione in V, \(Z_L\) e \(Z\) le distanze zenitali (90° meno l'altezza) di Luna e oggetto, \(X\) la massa d'aria.</p>
+      <div class="eq">$$I^*=10^{-0.4\,\left(3{,}84+0{,}026\,|\alpha|+4\cdot10^{-9}\alpha^4\right)},\qquad \cos\alpha=2\,i-1$$</div>
+      <p class="syms">\(I^*\) è la luminosità della Luna, \(\alpha\) l'angolo di fase in gradi (0° piena, 180° nuova), \(i\) la frazione illuminata. Mezza Luna (\(\alpha=90°\)) è circa 10 volte meno luminosa della piena, non la metà.</p>
+      <div class="eq">$$f(\rho)=10^{5.36}\left(1{,}06+\cos^2\rho\right)+10^{6.15-\rho/40},\qquad X(Z)=\left(1-0{,}96\sin^2 Z\right)^{-1/2}$$</div>
+      <p class="syms">\(f(\rho)\) è la diffusione: il primo termine è la diffusione molecolare, il secondo quella degli aerosol, molto forte vicino alla Luna (\(\rho\) in gradi).</p>
+      <p class="step">Somma con il cielo buio</p>
+      <div class="eq">$$B_{\rm nL}=34{,}08\;e^{\,20{,}7233-0{,}92104\,m},\qquad m_{\rm tot}=\frac{20{,}7233-\ln\!\left[(B_{0}+B_{\rm L})/34{,}08\right]}{0{,}92104}$$</div>
+      <p class="syms">\(B_{\rm nL}\) è la brillanza in nanolambert di un cielo di \(m\) mag/″², \(B_0\) quella del cielo senza Luna, \(m_{\rm tot}\) la brillanza totale che entra nel calcolo del fondo.</p>
+      <p class="step">Peso di un'ora con la Luna</p>
+      <div class="eq">$$w=\frac{t_{\rm obj}(\text{senza Luna})}{t_{\rm obj}(\text{con Luna})}\;\approx\;10^{-0.4\,(m_0-m_{\rm tot})}$$</div>
+      <p class="syms">\(w\) è quanto vale un'ora con la Luna in ore di cielo buio. L'approssimazione a destra vale quando domina il cielo: \(m_0\) è il cielo senza Luna. Lo stesso vale per l'inquinamento luminoso: ogni magnitudine di cielo più brillante moltiplica il tempo per 2,5. In uno stack con pesi \(p_i\propto1/\sigma_i^2\) (pesatura per rumore in Siril) le pose con la Luna contano già di meno, nella stessa proporzione.</p>
+      <p>In banda stretta il fondo è così ridotto che read noise e corrente di buio contano di più: la Luna pesa molto meno. Per questo il grafico della fase si appiattisce con Hα, OIII o il dual band.</p>
+    </section>
+
+    <section class="panel">
+      <h3>6. Perché il rapporto focale non decide da solo</h3>
+      <div class="eq">$$B_{\rm px}\;\propto\;\frac{p^2}{N^2}\left(1-\varepsilon^2\right)\eta,\qquad t_{\rm obj}\;\propto\;\frac{1}{A_{\rm eff}\,\eta}\;\;(\text{stessa area di cielo})$$</div>
+      <p class="syms">\(N=f/D\) è il rapporto focale, \(\eta\) l'efficienza complessiva. Due strumenti allo stesso \(N\) con la stessa camera ricevono lo stesso flusso per pixel. Ma se misuri la stessa porzione di cielo, per esempio una supernova o un dettaglio di pochi ″, vince l'area: il TDIG raccoglie circa 3 volte la luce del GSO. Il campo largo conta solo quando l'oggetto non entra nel campo più piccolo e servirebbe un mosaico.</p>
+    </section>
+
+    <section class="panel">
+      <h3>7. Binning</h3>
+      <div class="eq">$$s_b=b\,s,\qquad \mathrm{SNR}_b\approx b\cdot\mathrm{SNR}_1\;\Rightarrow\;t_{\rm obj}\propto\frac{1}{b^2}$$</div>
+      <p class="syms">\(b\) è il fattore di binning, \(s_b\) la scala finale. Con i CMOS il binning è una somma digitale di \(b\times b\) pixel, ognuno con il suo read noise. Un pixel finale raccoglie \(b^2\) volte più luce, quindi il suo SNR cresce di \(b\). Su un'area di cielo fissata il binning non cambia niente: sommi gli stessi elettroni e le stesse letture.</p>
+      <div class="eq">$$\frac{\mathrm{FWHM}}{s_b}\gtrsim2$$</div>
+      <p class="syms">Il seeing deve coprire almeno 2 pixel finali. Il TDIG a 0,27″/px regge bin 2–3, il GSO a 0,48″/px al massimo bin 2. Il riepilogo lo segna in rosso quando si scende sotto.</p>
+    </section>
+
+    <section class="panel">
+      <h3>8. Gli oggetti: perché una stella è più facile di una nebulosa</h3>
+      <p>La magnitudine di catalogo è la luce totale. Una stella la concentra nel disco del seeing, pochi ″²; una galassia o una nebulosa la spalma su un'area enorme. Per il rumore conta la luce per ″², cioè la brillanza superficiale.</p>
+      <div class="eq">$$\mu=m+2{,}5\log_{10}\Omega,\qquad \Omega=\frac{\pi}{4}\,a\,b\cdot3600$$</div>
+      <p class="syms">\(\mu\) è la brillanza superficiale media in mag/″², \(m\) la magnitudine totale, \(\Omega\) l'area dell'oggetto in ″², \(a\) e \(b\) gli assi maggiore e minore in primi d'arco (3600 converte ′² in ″²).</p>
+      <p>Esempio: M33 ha magnitudine 5,7 ed è più luminosa di una stella di magnitudine 8, ma la sua luce è sparsa su circa 8 milioni di ″², quindi μ ≈ 23. La stella di magnitudine 8, con seeing di 2,5″, mette tutta la sua luce in circa 9 ″²: μ ≈ 10,4. Per ″² la stella è circa 12,6 magnitudini più intensa, cioè circa 100.000 volte. Per questo la stella si vede in un attimo e M33 richiede notti.</p>
+      <div class="objlist">
+        <div><b>Galassie: M33, M31, M81, M51, M101, NGC 7331.</b> Magnitudine e dimensioni sono quelle di catalogo, e la brillanza media è calcolata con la formula sopra. «Parte da mostrare» sposta il calcolo sui bracci esterni, che sono più deboli della media di circa 1–2 mag/″²: è quella zona a decidere quante ore servono. M51 e NGC 7331 hanno la luce concentrata in poco spazio e sono più rapide; M33 e M101 sono grandi e diffuse e sono tra le galassie più lente da fotografare.</div>
+        <div><b>IFN μ 26.</b> Integrated Flux Nebula: nubi di polvere della nostra Galassia lontane dal piano della Via Lattea, illuminate dalla luce di tutte le sue stelle. Si vedono intorno a M81 e M82 e verso la Polare. È luce riflessa, quindi spettro continuo: i filtri a banda stretta non la vedono.</div>
+        <div><b>Code mareali μ 26,5.</b> Quando due galassie passano vicine, la gravità dell'una tira più forte la parte vicina dell'altra che quella lontana: è una forza di marea, come quella della Luna sugli oceani. Le stelle strappate formano lunghe scie sottili che restano visibili per centinaia di milioni di anni. Esempi: le Antenne (NGC 4038/39), il flusso stellare di NGC 5907, i lembi esterni di M51. Brillano tra 26 e 29 mag/″² e sono tra gli oggetti più deboli alla portata di un amatore.</div>
+        <div><b>Planetaria (tipo M27).</b> Il guscio di gas espulso da una stella come il Sole a fine vita, ionizzato dalla nana bianca rimasta al centro. Emette soprattutto OIII e Hα, con poco SII.</div>
+        <div><b>Regione HII luminosa.</b> Una nube di idrogeno ionizzata da stelle giovani e calde, come le parti brillanti di NGC 7000, M16 o M8. Domina l'Hα.</div>
+        <div><b>Filamenti di resto di supernova.</b> Gas spazzato dall'onda d'urto di un'esplosione avvenuta migliaia di anni fa, come la Velo o Simeis 147. Hα, OIII e SII hanno intensità paragonabili.</div>
+        <div><b>Hα diffuso debole.</b> Grandi regioni di gas ionizzato a bassa brillanza, come molti oggetti del catalogo Sharpless. Pochi rayleigh: serve banda stretta e molte ore.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>9. L'ostruzione centrale</h3>
+      <p>GSO RC8: 42% (secondario da 85 mm su 203 mm, dalla scheda tecnica). RC 360: 47%, valore che Officina Stellare dichiara per la serie Pro RC; per il 360 non risulta un dato pubblicato. Tra il 40% e il 50% l'area cambia di circa ±6%, quindi l'incertezza pesa poco.</p>
+      <p>A ostruire è il paraluce del secondario, più largo dello specchio. Per misurarlo: riprendi una stella molto sfocata e misura in pixel il buco centrale e l'anello esterno.</p>
+      <div class="eq">$$\varepsilon=\frac{d_{\rm buco}}{d_{\rm anello}}$$</div>
+      <p class="syms">\(d_{\rm buco}\) è il diametro del buco centrale, \(d_{\rm anello}\) quello esterno dell'anello, nella stessa immagine. Il rapporto non dipende da quanto hai sfocato.</p>
+    </section>
+
+    <section class="panel">
+      <h3>10. Cosa il modello non considera</h3>
+      <p>Gradienti, luce parassita e flat imperfetti: quando dominano loro, più ore non migliorano l'immagine. Il cielo è trattato come continuo: le righe dell'airglow e quelle delle vecchie lampade al sodio (589 nm, fuori da Hα e OIII) sono ignorate, così come la riga NII a 658,4 nm, che entra nei filtri Hα da 7 nm. La luce lunare è più blu del cielo buio, quindi in realtà disturba di più il filtro B e meno R e Hα. Non sono considerati nemmeno l'estinzione con l'altezza dell'oggetto e le differenze tra una notte e l'altra. Le ore assolute sono indicative; i rapporti tra configurazioni sono molto più affidabili.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["$$","$$"]]},svg:{fontCache:"global"},options:{enableMenu:false}};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/* ---------- modello fisico ---------- */
+const TAU=0.85, APFRAC=0.712, RAY=1.870e-6, DL=0.1;
+const GRID=[];for(let i=0;395+i*DL<=705;i++)GRID.push(395+i*DL);
+const QTAB={lam:[400,425,450,475,500,525,550,575,600,625,650,675,700],
+  mono:[.75,.85,.88,.90,.91,.89,.86,.82,.77,.71,.66,.61,.57],
+  B:[.55,.70,.75,.65,.45,.20,.06,.03,.02,.02,.02,.03,.04],
+  G:[.05,.08,.15,.40,.62,.80,.75,.50,.20,.08,.05,.05,.06],
+  R:[.03,.02,.02,.02,.03,.05,.10,.40,.62,.62,.60,.55,.50]};
+function qe(c,l){const x=QTAB.lam,y=QTAB[c];if(l<=x[0])return y[0];if(l>=x[x.length-1])return y[y.length-1];
+  let i=1;while(x[i]<l)i++;const t=(l-x[i-1])/(x[i]-x[i-1]);return y[i-1]+t*(y[i]-y[i-1]);}
+const LN={Ha:656.3,OIII:500.7,SII:672.4};
+const nb=(c,w)=>[c-w/2,c+w/2];
+const FILTERS={
+  mono:{
+    L:{name:"L (luminanza)",short:"L",bands:()=>[[400,700]],T:.95,pix:{mono:1}},
+    R:{name:"R",short:"R",bands:()=>[[590,700]],T:.95,pix:{mono:1}},
+    G:{name:"G",short:"G",bands:()=>[[490,580]],T:.95,pix:{mono:1}},
+    B:{name:"B",short:"B",bands:()=>[[400,510]],T:.95,pix:{mono:1}},
+    Ha:{name:"Hα banda stretta",short:"Hα",nb:true,bands:w=>[nb(LN.Ha,w)],T:.9,pix:{mono:1}},
+    OIII:{name:"OIII banda stretta",short:"OIII",nb:true,bands:w=>[nb(LN.OIII,w)],T:.9,pix:{mono:1}},
+    SII:{name:"SII banda stretta",short:"SII",nb:true,bands:w=>[nb(LN.SII,w)],T:.9,pix:{mono:1}}
+  },
+  osc:{
+    NONE:{name:"Nessun filtro (UV/IR cut)",short:"senza filtro",bands:()=>[[400,700]],T:.97,pix:{R:.25,G:.5,B:.25}},
+    DHA:{name:"Dual band · canale Hα",short:"dual Hα",nb:true,bands:w=>[nb(LN.Ha,w),nb(LN.OIII,w)],T:.9,pix:{R:.25}},
+    DOIII:{name:"Dual band · canale OIII",short:"dual OIII",nb:true,bands:w=>[nb(LN.Ha,w),nb(LN.OIII,w)],T:.9,pix:{G:.5,B:.25}}
+  }};
+const CAMS={
+  ASI2600MC:{name:"ASI2600MC Pro (colori)",short:"2600MC",kind:"osc",p:3.76,w:23.5,h:15.7,rn:1.5,dark:0.002},
+  ZEUS_M:{name:"Zeus 455M (mono)",short:"Zeus M",kind:"mono",p:3.76,w:36,h:24,rn:1.5,dark:0.002},
+  ZEUS_C:{name:"Zeus 455C (colori)",short:"Zeus C",kind:"osc",p:3.76,w:36,h:24,rn:1.3,dark:0.002}
+};
+const SCOPES={
+  TDIG:{name:"TDIG (RC 360 f/8)",short:"TDIG",D:360,f:2880,eps:47},
+  GSO:{name:"GSO RC8 f/8",short:"GSO",D:203,f:1624,eps:42},
+  CUSTOM:{name:"Altro telescopio",short:"Altro",D:130,f:910,eps:0}
+};
+const CHCACHE={};
+function channel(camKey,fk,w){
+  const key=camKey+"|"+fk+"|"+w; if(CHCACHE[key])return CHCACHE[key];
+  const cam=CAMS[camKey], f=FILTERS[cam.kind][fk], bands=f.bands(w);
+  const eff=l=>{if(!bands.some(([a,b])=>l>=a&&l<=b))return 0;let s=0;for(const c in f.pix)s+=f.pix[c]*qe(c,l);return f.T*s;};
+  let cont=0,eqw=0;for(const l of GRID){const e=eff(l);if(e){cont+=1e4*(550/l)*e*DL;eqw+=e*DL;}}
+  const pixFrac=Object.values(f.pix).reduce((a,b)=>a+b,0);
+  return CHCACHE[key]={f,cont,eqw,pixFrac,line:{Ha:eff(LN.Ha),OIII:eff(LN.OIII),SII:eff(LN.SII)}};
+}
+function moonSky(dark,illum,moonAlt,sep,objAlt){
+  if(illum<=0||moonAlt<=0)return dark;
+  const k=0.17, alpha=Math.acos(Math.min(1,Math.max(-1,2*illum-1)))*180/Math.PI;
+  const Istar=10**(-0.4*(3.84+0.026*alpha+4e-9*alpha**4));
+  const r=sep*Math.PI/180, fr=10**5.36*(1.06+Math.cos(r)**2)+10**(6.15-sep/40);
+  const X=z=>1/Math.sqrt(1-0.96*Math.sin(z*Math.PI/180)**2);
+  const Bm=fr*Istar*10**(-0.4*k*X(90-moonAlt))*(1-10**(-0.4*k*X(90-objAlt)));
+  const B0=34.08*Math.exp(20.7233-0.92104*dark);
+  return (20.7233-Math.log((B0+Bm)/34.08))/0.92104;
+}
+
+/* ---------- interfaccia ---------- */
+const $=id=>document.getElementById(id);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const it=(x,d=1)=>x.toFixed(d).replace(".",",");
+const clamp=(x,a,b)=>Math.min(Math.max(x,a),b);
+const muOf=(m,a,b)=>m+2.5*Math.log10(Math.PI/4*Math.max(a,0.01)*Math.max(b,0.01)*3600);
+const PRESETS=[
+  {g:"Galassie"},
+  {k:"m33",label:"M33",type:"ext",m:5.7,a:70.8,b:41.7,d:1.5},
+  {k:"m31",label:"M31",type:"ext",m:3.4,a:190,b:60,d:1.5},
+  {k:"m81",label:"M81",type:"ext",m:6.9,a:26.9,b:14.1,d:1.5},
+  {k:"m51",label:"M51",type:"ext",m:8.4,a:11.2,b:6.9,d:1.5},
+  {k:"m101",label:"M101",type:"ext",m:7.9,a:28.8,b:26.9,d:1.5},
+  {k:"n7331",label:"NGC 7331",type:"ext",m:9.5,a:10.5,b:3.7,d:1.5},
+  {br:true},{g:"Strutture deboli"},
+  {k:"ifn",label:"IFN μ 26",type:"ext",mu:26},
+  {k:"tidal",label:"Code mareali μ 26,5",type:"ext",mu:26.5},
+  {br:true},{g:"Nebulose"},
+  {k:"pn",label:"M27 (planetaria)",type:"em",ha:1500,o3:3000,s2:100},
+  {k:"hii",label:"NGC 7000, parti luminose",type:"em",ha:600,o3:120,s2:150},
+  {k:"snr",label:"Velo, filamenti",type:"em",ha:60,o3:40,s2:30},
+  {k:"faint",label:"Hα diffuso debole (Sh2)",type:"em",ha:8,o3:1,s2:3},
+  {br:true},{g:"Per confronto"},
+  {k:"sn",label:"Supernova m 17 (stella)",type:"point",mag:17}
+];
+PRESETS.forEach(p=>{if(p.m!=null)p.mu=Math.round((muOf(p.m,p.a,p.b)+p.d)*10)/10;});
+const BORTLE=[[0,"Personalizzato"],[21.9,"1 · cielo eccellente"],[21.7,"2"],[21.4,"3 · rurale"],[20.9,"4"],[20.2,"5 · suburbano"],[19.5,"6"],[18.9,"7 · periferia di città"],[18.4,"8"],[17.8,"9 · centro città"]];
+$("bortle").innerHTML=BORTLE.map(([v,n])=>`<option value="${v}">${n}${v?` (${it(v)})`:""}</option>`).join("");
+const cfgs=[
+  {id:"A",scope:"TDIG",cam:"ZEUS_M",fil:"L",tsub:180,bin:1,color:"--a"},
+  {id:"B",scope:"GSO",cam:"ASI2600MC",fil:"NONE",tsub:180,bin:1,color:"--b"}
+];
+$("cfgRow").innerHTML=cfgs.map(c=>{const s=SCOPES[c.scope];return `
+ <section class="panel cfg" style="--c:var(${c.color})">
+  <h2>Configurazione ${c.id}</h2>
+  <div class="grid2">
+   <label>Telescopio<select id="scope${c.id}">${Object.entries(SCOPES).map(([k,v])=>`<option value="${k}" ${k===c.scope?"selected":""}>${v.name}</option>`).join("")}</select></label>
+   <label>Camera<select id="cam${c.id}">${Object.entries(CAMS).map(([k,v])=>`<option value="${k}" ${k===c.cam?"selected":""}>${v.name}</option>`).join("")}</select></label>
+  </div>
+  <div class="grid2 mt">
+   <label>Filtro<select id="fil${c.id}"></select></label>
+   <label id="lblBw${c.id}">Banda filtro (nm)<input id="bw${c.id}" type="number" min="2" max="15" step="0.5" value="7"></label>
+  </div>
+  <div class="grid3">
+   <label>Diametro (mm)<input id="D${c.id}" type="number" min="20" step="1" value="${s.D}"></label>
+   <label>Focale (mm)<input id="f${c.id}" type="number" min="50" step="10" value="${s.f}"></label>
+   <label>Ostruzione (%)<input id="eps${c.id}" type="number" min="0" max="80" step="1" value="${s.eps}"></label>
+  </div>
+  <div class="grid2 mt">
+   <label>Temperatura sensore (°C)<input id="temp${c.id}" type="number" min="-30" max="35" step="1" value="-10"></label>
+  </div>
+  <div class="grid2 mt" style="grid-template-columns:2fr 1fr">
+   <label>Posa singola (s)
+    <div class="range"><input id="tsub${c.id}" type="range" min="10" max="900" step="10" value="${c.tsub}"><output id="tsubO${c.id}">${c.tsub}</output></div>
+   </label>
+   <label>Binning<select id="bin${c.id}">${[1,2,3,4].map(b=>`<option value="${b}" ${b===c.bin?"selected":""}>${b}×${b}</option>`).join("")}</select></label>
+  </div>
+ </section>`}).join("");
+function fillFilters(c,pref){
+  const kind=CAMS[$("cam"+c.id).value].kind, sel=$("fil"+c.id), cur=pref||sel.value;
+  sel.innerHTML=Object.entries(FILTERS[kind]).map(([k,f])=>`<option value="${k}">${f.name}</option>`).join("");
+  sel.value=FILTERS[kind][cur]?cur:Object.keys(FILTERS[kind])[0];
+}
+cfgs.forEach(c=>{
+  fillFilters(c,c.fil);
+  $("scope"+c.id).addEventListener("change",e=>{const s=SCOPES[e.target.value];$("D"+c.id).value=s.D;$("f"+c.id).value=s.f;$("eps"+c.id).value=s.eps;update();});
+  $("cam"+c.id).addEventListener("change",()=>{fillFilters(c);update();});
+});
+$("presets").innerHTML=PRESETS.map(p=>p.g?`<span class="grp">${p.g}</span>`:p.br?`<span class="brk"></span>`:`<button type="button" data-k="${p.k}" aria-pressed="false">${p.label}</button>`).join("");
+$("presets").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  const p=PRESETS.find(x=>x.k===b.dataset.k);
+  $("objType").value=p.type;
+  if(p.type==="point")$("mag").value=p.mag;
+  else if(p.type==="ext"){if(p.m!=null){$("mtot").value=p.m;$("sa").value=p.a;$("sb").value=p.b;$("dm").value=p.d;}$("mu").value=p.mu;}
+  else{$("ha").value=p.ha;$("o3").value=p.o3;$("s2").value=p.s2;}
+  $("presets").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  update();
+});
+["mtot","sa","sb","dm"].forEach(id=>$(id).addEventListener("input",()=>{
+  $("mu").value=(muOf(+$("mtot").value,+$("sa").value,+$("sb").value)+(+$("dm").value||0)).toFixed(1);}));
+$("bortle").addEventListener("change",e=>{if(+e.target.value)$("sqm").value=e.target.value;update();});
+$("sqm").addEventListener("input",()=>{$("bortle").value="0";});
+
+const D0=0.0022, T0=0, TD=6;
+const darkAt=T=>D0*2**((T-T0)/TD);
+function system(c,binOverride,tempOverride,fkOverride){
+  const D=Math.max(+$("D"+c.id).value,1)/10, f=Math.max(+$("f"+c.id).value,1), eps=clamp(+$("eps"+c.id).value,0,95)/100;
+  const camKey=$("cam"+c.id).value, cam=CAMS[camKey], sc=SCOPES[$("scope"+c.id).value];
+  let fk=fkOverride||$("fil"+c.id).value; if(!FILTERS[cam.kind][fk])fk=Object.keys(FILTERS[cam.kind])[0];
+  const bw=clamp(+$("bw"+c.id).value||7,1,30), ch=channel(camKey,fk,bw);
+  const A=Math.PI/4*D*D*(1-eps*eps), ps=206.265*cam.p/f, bin=binOverride||+$("bin"+c.id).value;
+  const temp=tempOverride??+$("temp"+c.id).value;
+  return {sc,cam,ch,fk,A,ps,bin,temp,dark:darkAt(temp),sp:ps*bin,rateA:A*TAU,tsub:+$("tsub"+c.id).value,N:f/(D*10),
+    fovW:cam.w/f*206265/60,fovH:cam.h/f*206265/60};
+}
+function env(o={}){
+  const dark=o.dark??+$("sqm").value, illum=(o.illum??+$("illum").value)/100;
+  return {dark,illum,
+    skyMag:moonSky(dark,illum,+$("moonAlt").value,clamp(+$("sep").value,10,180),clamp(+$("objAlt").value,5,90)),
+    type:o.type??$("objType").value,mag:o.mag??+$("mag").value,mu:o.mu??+$("mu").value,
+    ha:o.ha??Math.max(+$("ha").value,0),o3:o.o3??Math.max(+$("o3").value,0),s2:o.s2??Math.max(+$("s2").value,0),
+    fwhm:o.fwhm??Math.max(+$("seeing").value,0.5),mode:$("mode").value,elem:Math.max(+$("elem").value,0.5),
+    T:Math.max(+$("target").value,1),oh:Math.max(+$("oh").value,0),nmin:Math.max(+$("nmin").value,1),good:clamp(+$("good").value||75,5,100)/100};
+}
+function fluxes(sys,E){
+  const pix2=sys.sp**2, ch=sys.ch, kC=sys.rateA*ch.cont; let S,omega;
+  if(E.type==="point"){omega=Math.max(Math.PI*(0.67*E.fwhm)**2,pix2);S=kC*10**(-0.4*E.mag)*APFRAC;}
+  else{
+    omega=E.mode==="pixel"?pix2:Math.max(E.elem**2,pix2);
+    const sb=E.type==="ext"?kC*10**(-0.4*E.mu):sys.rateA*RAY*(E.ha*ch.line.Ha+E.o3*ch.line.OIII+E.s2*ch.line.SII);
+    S=sb*omega;
+  }
+  const skyArc=kC*10**(-0.4*E.skyMag);
+  return {S,B:skyArc*omega,npx:omega/(sys.ps**2)*ch.pixFrac,Bpx:skyArc*sys.ps**2/ch.pixFrac};
+}
+const hoursTo=(s,f,t,E)=>hoursRaw(s,f,t,E)/REF;
+function hoursRaw(sys,f,tsub,E){
+  if(!(f.S>0))return Infinity;
+  const extra=f.npx*(sys.dark+sys.cam.rn**2/tsub);
+  return Math.max(E.T**2*(f.S+f.B+extra)/f.S**2*(tsub+E.oh)/tsub/3600, E.nmin*(tsub+E.oh)/3600)/E.good;
+}
+function snrAt(sys,f,h,tsub,E){
+  const t=h*3600*tsub/(tsub+E.oh)*E.good; if(t<=0||!(f.S>0))return 0;
+  return f.S*t/Math.sqrt((f.S+f.B+f.npx*sys.dark)*t+f.npx*sys.cam.rn**2*t/tsub);
+}
+let REF=1;
+const fmtX=v=>{
+  if(!isFinite(v))return "—";
+  if(v<=0)return "×0";
+  if(v>=10)return `×${Math.round(v)}`;
+  if(v>=1)return `×${it(v)}`;
+  const d=Math.min(4,1-Math.floor(Math.log10(v)));
+  return `×${String(parseFloat(v.toFixed(d))).replace(".",",")}`;
+};
+const fmtH=h=>{
+  if(!isFinite(h))return "nessun segnale";
+  if(h<=0)return "0";
+  const m=h*60;
+  if(m<1)return `${Math.round(m*60)} s`;
+  if(m<10)return `${it(m)} min`;
+  if(h<1)return `${Math.round(m)} min`;
+  if(h<10)return `${it(h)} h`;
+  if(h<48)return `${Math.round(h)} h`;
+  const n=h/8;
+  return `${Math.round(h)} h · ${n<10?it(n):Math.round(n)} notti`;
+};
+const nameOf=s=>`${s.sc.short} + ${s.cam.short} · ${s.ch.f.short}`;
+const fin=v=>isFinite(v)?v:null;
+const logTick=v=>{const e=Math.floor(Math.log10(v)+1e-9),m=v/10**e;return [1,2,5].some(k=>Math.abs(m-k)<1e-6)?fmtH(v):"";};
+
+function buildFilterTable(){
+  const rows=[["ZEUS_M","Zeus 455M"],["ASI2600MC","ASI2600MC"]].flatMap(([ck,cn])=>
+    Object.keys(FILTERS[CAMS[ck].kind]).map(fk=>{const ch=channel(ck,fk,7);
+      const pc=x=>x>0.005?`${Math.round(x*100)}%`:"—";
+      return `<tr><td>${cn}</td><td>${ch.f.name}</td><td>${Math.round(ch.pixFrac*100)}%</td><td>${it(ch.eqw)} nm</td><td>${pc(ch.line.Ha)}</td><td>${pc(ch.line.OIII)}</td><td>${pc(ch.line.SII)}</td></tr>`;}));
+  $("filterTable").innerHTML=`<tr><th>Camera</th><th>Filtro / canale</th><th>Pixel usati</th><th>Banda equivalente</th><th>Resa Hα</th><th>Resa OIII</th><th>Resa SII</th></tr>`+rows.join("");
+}
+
+let ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8,ch9,ch10;
+function barOpts(vt,log,horiz){
+  const tc=css("--muted"),gc=css("--grid");
+  const val={type:log?"logarithmic":"linear",title:{display:true,text:vt,color:tc},ticks:{color:tc,font:{family:"IBM Plex Mono",size:11},callback:log?logTick:(v=>fmtH(v))},grid:{color:gc}};
+  if(!log)val.beginAtZero=true;
+  const cat={type:"category",ticks:{color:css("--fg"),font:{family:"Barlow",size:12}},grid:{display:false}};
+  return {responsive:true,maintainAspectRatio:false,animation:false,indexAxis:horiz?"y":"x",
+    plugins:{legend:{labels:{color:css("--fg"),font:{family:"Barlow",size:13},filter:i=>!i.text.startsWith("_")}},
+      tooltip:{filter:i=>!i.dataset.label.startsWith("_"),callbacks:{label:x=>`${x.dataset.label.split(":")[0]}: ${fmtH(horiz?x.parsed.x:x.parsed.y)}`}}},
+    scales:horiz?{x:val,y:cat}:{x:cat,y:val}};
+}
+function chartOpts(xTitle,yTitle,logY){
+  const tc=css("--muted"), gc=css("--grid");
+  const o={responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},
+    plugins:{legend:{labels:{color:css("--fg"),font:{family:"Barlow",size:13},usePointStyle:true,filter:i=>!i.text.startsWith("_")}},
+      tooltip:{filter:i=>!i.dataset.label.startsWith("_")}},
+    scales:{x:{type:"linear",title:{display:true,text:xTitle,color:tc},ticks:{color:tc,font:{family:"IBM Plex Mono",size:11}},grid:{color:gc}},
+            y:{title:{display:true,text:yTitle,color:tc},ticks:{color:tc,font:{family:"IBM Plex Mono",size:11}},grid:{color:gc},beginAtZero:!logY}}};
+  if(logY){o.scales.y.type="logarithmic";o.scales.y.ticks.callback=logTick;}
+  return o;
+}
+function draw(ref,id,type,data,opts){if(ref){ref.data=data;ref.options=opts;ref.update();return ref;}return new Chart($(id),{type,data,options:opts});}
+
+function update(){
+  const E=env(), pt=E.type==="point";
+  $("lblMag").hidden=!pt;
+  ["lblMu","lblMt","lblSa","lblSb","lblDm"].forEach(id=>$(id).hidden=E.type!=="ext");
+  if(E.type==="ext"){
+    const mMean=muOf(+$("mtot").value,+$("sa").value,+$("sb").value), mt=+$("mtot").value;
+    const mStar=mt+2.5*Math.log10(Math.PI*(0.67*E.fwhm)**2), fac=10**(0.4*(E.mu-mStar));
+    $("muNote").textContent=`Brillanza media dell'oggetto ${it(mMean)} mag/″²; il calcolo usa ${it(E.mu)} mag/″². Una stella con la stessa magnitudine totale (${it(mt)}) concentra la luce nel disco del seeing: circa ${it(mStar)} mag/″², ${fac.toLocaleString("it-IT",{maximumSignificantDigits:2})} volte più intensa per ″².`;
+  } else $("muNote").textContent="";
+  ["lblHa","lblO3","lblS2"].forEach(id=>$(id).hidden=E.type!=="em");
+  $("lblMode").hidden=pt; $("lblElem").hidden=pt||E.mode==="pixel";
+  $("illumO").value=$("illum").value;
+  cfgs.forEach(c=>{$("tsubO"+c.id).value=$("tsub"+c.id).value;});
+  const S=cfgs.map(c=>system(c));
+  cfgs.forEach((c,i)=>{$("lblBw"+c.id).hidden=!S[i].ch.f.nb;});
+  const F=S.map(s=>fluxes(s,E)), HR=S.map((s,i)=>hoursRaw(s,F[i],s.tsub,E));
+  REF=1;
+  const H=HR.map(h=>h/REF);
+  const cols=[css("--a"),css("--b")], colT=css("--target");
+
+  const moonOn=E.illum>0&&+$("moonAlt").value>0;
+  $("skyNote").textContent=moonOn
+    ?`Fondo cielo con questa Luna: ${it(E.skyMag,2)} mag/″² (senza Luna ${it(E.dark,2)}), cioè ${it(10**(0.4*(E.dark-E.skyMag)))} volte più luminoso.`
+    :`Luna assente o sotto l'orizzonte: fondo cielo ${it(E.dark,2)} mag/″².`;
+
+  // verdetto
+  let vtxt;
+  if(!isFinite(H[0])&&!isFinite(H[1]))vtxt="Nessuna delle due configurazioni vede questo oggetto con il filtro scelto";
+  else if(!isFinite(H[0])||!isFinite(H[1])){const w=isFinite(H[0])?0:1;$("verdict").style.setProperty("--win",cols[w]);
+    vtxt=`Solo <span>${cfgs[w].id}</span> vede questo oggetto con il filtro scelto`;}
+  else{const fast=H[0]<=H[1]?0:1, ratio=Math.max(...H)/Math.min(...H);$("verdict").style.setProperty("--win",cols[fast]);
+    vtxt=Math.abs(ratio-1)<0.03?"Le due configurazioni sono equivalenti":`<span>${cfgs[fast].id}</span> arriva a SNR ${E.T} <span>${it(ratio)}×</span> più in fretta`;}
+  $("verdict").innerHTML=vtxt;
+  $("stats").innerHTML=cfgs.map((c,i)=>{
+    const s=S[i], tOpt=10*s.cam.rn**2/(F[i].Bpx+s.dark), dShare=s.dark/(F[i].Bpx+s.dark), samp=E.fwhm/s.sp;
+    return `<div class="stat" style="color:${cols[i]}">${c.id} · ${nameOf(s)}<b>${fmtH(H[i])}</b></div>
+      <div class="stat">${c.id} · area utile · rapporto focale<b>${Math.round(s.A)} cm² · f/${it(s.N)}</b></div>
+      <div class="stat">${c.id} · campo<b>${Math.round(s.fovW)}′ × ${Math.round(s.fovH)}′</b></div>
+      <div class="stat">${c.id} · scala finale (bin ${s.bin})<b>${it(s.sp,2)}″/px</b></div>
+      <div class="stat">${c.id} · campionamento<b class="${samp<2?"bad":""}">${it(samp)} px per FWHM${samp<2?" · sotto":samp>4?" · sovra":""}</b></div>
+      <div class="stat">${c.id} · banda equivalente<b>${it(s.ch.eqw)} nm</b></div>
+      <div class="stat">${c.id} · cielo per pixel usato<b>${F[i].Bpx<0.1?it(F[i].Bpx,3):it(F[i].Bpx,2)} e⁻/s</b></div>
+      <div class="stat">${c.id} · buio a ${s.temp} °C<b class="${dShare>0.3?"bad":""}">${s.dark<0.01?it(s.dark,4):it(s.dark,3)} e⁻/s · ${Math.round(dShare*100)}% del fondo</b></div>
+      <div class="stat">${c.id} · posa minima utile<b>${tOpt<3600?Math.round(tOpt)+" s":"oltre 1 h"}</b></div>`;
+  }).join("");
+
+  // 1: SNR contro ore
+  const finH=H.filter(isFinite), xmax=Math.max(0.25,(finH.length?Math.max(...finH):1)*1.35), N=120;
+  const xs=Array.from({length:N+1},(_,k)=>k*xmax/N);
+  const ds1=S.map((s,i)=>({label:`${cfgs[i].id}: ${nameOf(s)}, ${s.tsub} s, bin ${s.bin}`,
+    data:xs.map(x=>({x,y:snrAt(s,F[i],x*REF,s.tsub,E)})),borderColor:cols[i],backgroundColor:cols[i],borderWidth:2.5,pointRadius:0}));
+  ds1.push({label:`SNR obiettivo ${E.T}`,data:[{x:0,y:E.T},{x:xmax,y:E.T}],borderColor:colT,backgroundColor:colT,borderDash:[6,5],borderWidth:1.5,pointRadius:0});
+  H.forEach((h,i)=>{if(isFinite(h)&&h<=xmax)ds1.push({label:"_m"+i,data:[{x:h,y:Math.max(E.T,snrAt(S[i],F[i],h,S[i].tsub,E))}],borderColor:cols[i],backgroundColor:cols[i],pointRadius:6,showLine:false});});
+  const o1=chartOpts("tempo di ripresa","SNR"); o1.scales.x.max=xmax;
+  o1.scales.x.ticks.callback=v=>fmtH(v);
+  o1.plugins.tooltip.callbacks={title:x=>fmtH(x[0].parsed.x),label:x=>`${x.dataset.label.split(":")[0]}: SNR ${it(x.parsed.y)}`};
+  ch1=draw(ch1,"c1","line",{datasets:ds1},o1);
+
+  // 4: fase lunare
+  const ill=[];for(let p=0;p<=100;p+=2)ill.push(p);
+  const ds4=S.map((s,i)=>({label:`${cfgs[i].id}: ${nameOf(s)}`,
+    data:ill.map(p=>{const e=env({illum:p});return {x:p,y:fin(hoursTo(s,fluxes(s,e),s.tsub,e))};}),
+    borderColor:cols[i],backgroundColor:cols[i],borderWidth:2.5,pointRadius:0,spanGaps:false}));
+  S.forEach((s,i)=>{if(isFinite(H[i]))ds4.push({label:"_p"+i,data:[{x:+$("illum").value,y:H[i]}],borderColor:cols[i],backgroundColor:cols[i],pointRadius:6,showLine:false});});
+  const o4=chartOpts("Luna illuminata (%)","tempo per SNR obiettivo",true); o4.scales.x.min=0;o4.scales.x.max=100;
+  o4.scales.x.ticks.callback=v=>`${v}%`;
+  o4.plugins.tooltip.callbacks={title:x=>`Luna ${x[0].parsed.x}%`,label:x=>`${x.dataset.label.split(":")[0]}: ${fmtH(x.parsed.y)}`};
+  ch4=draw(ch4,"c4","line",{datasets:ds4},o4);
+
+  // 5: inquinamento luminoso
+  const sq=[];for(let k=0;k<=50;k++)sq.push(17+k*0.1);
+  const ds5=S.map((s,i)=>({label:`${cfgs[i].id}: ${nameOf(s)}`,
+    data:sq.map(d=>{const e=env({dark:d});return {x:d,y:fin(hoursTo(s,fluxes(s,e),s.tsub,e))};}),
+    borderColor:cols[i],backgroundColor:cols[i],borderWidth:2.5,pointRadius:0}));
+  S.forEach((s,i)=>{if(isFinite(H[i]))ds5.push({label:"_q"+i,data:[{x:E.dark,y:H[i]}],borderColor:cols[i],backgroundColor:cols[i],pointRadius:6,showLine:false});});
+  const o5=chartOpts("cielo senza Luna (mag/″²)","tempo per SNR obiettivo",true); o5.scales.x.min=17;o5.scales.x.max=22;
+  o5.scales.x.ticks.callback=v=>it(v);
+  o5.plugins.tooltip.callbacks={title:x=>`cielo ${it(x[0].parsed.x)} mag/″²`,label:x=>`${x.dataset.label.split(":")[0]}: ${fmtH(x.parsed.y)}`};
+  ch5=draw(ch5,"c5","line",{datasets:ds5},o5);
+
+  // tabella Luna
+  const phases=[["Luna nuova",0],["Falce",25],["Primo quarto",50],["Gibbosa",75],["Luna piena",100]];
+  const base=S.map(s=>{const e=env({illum:0});return hoursTo(s,fluxes(s,e),s.tsub,e);});
+  $("moonTable").innerHTML=`<tr><th>Fase</th><th>Fondo cielo</th>${cfgs.map(c=>`<th>${c.id} · tempo</th><th>${c.id} · peso di un'ora</th>`).join("")}</tr>`+
+    phases.map(([n,p])=>{const e=env({illum:p});
+      return `<tr><td>${n} (${p}%)</td><td>${it(e.skyMag,2)} mag/″²</td>`+S.map((s,i)=>{const h=hoursTo(s,fluxes(s,e),s.tsub,e), w=base[i]/h;
+        return `<td class="${i?"b":"a"}">${fmtH(h)}</td><td>${fmtX(w)}</td>`;}).join("")+`</tr>`;}).join("");
+
+  // 7: oggetti di esempio
+  const objs=PRESETS.filter(p=>p.k);
+  const ds7=cfgs.map((c,i)=>({label:`${c.id}: ${nameOf(S[i])}`,backgroundColor:cols[i],borderRadius:3,
+    data:objs.map(p=>{const e=env({type:p.type,mag:p.mag,mu:p.mu,ha:p.ha,o3:p.o3,s2:p.s2});return fin(hoursTo(S[i],fluxes(S[i],e),S[i].tsub,e));})}));
+  ch7=draw(ch7,"c7","bar",{labels:objs.map(p=>p.label),datasets:ds7},barOpts("tempo per SNR obiettivo",true,true));
+
+  // 8: filtri
+  const fl=[];cfgs.forEach((c,i)=>Object.keys(FILTERS[S[i].cam.kind]).forEach(fk=>fl.push([i,fk])));
+  const ds8=cfgs.map((c,i)=>({label:`${c.id}: ${S[i].sc.short} + ${S[i].cam.short}`,backgroundColor:cols[i],borderRadius:3,grouped:false,
+    data:fl.map(([j,fk])=>{if(j!==i)return null;const s=system(c,null,null,fk);return fin(hoursTo(s,fluxes(s,E),s.tsub,E));})}));
+  ch8=draw(ch8,"c8","bar",{labels:fl.map(([j,fk])=>`${cfgs[j].id} · ${FILTERS[S[j].cam.kind][fk].short}`),datasets:ds8},barOpts("tempo per SNR obiettivo",true,true));
+
+  // 9: seeing
+  const see=[];for(let k=0;k<=40;k++)see.push(1+k*0.1);
+  const ds9=S.map((s,i)=>({label:`${cfgs[i].id}: ${nameOf(s)}`,
+    data:see.map(v=>{const e=env({fwhm:v});return {x:v,y:fin(hoursTo(s,fluxes(s,e),s.tsub,e))};}),
+    borderColor:cols[i],backgroundColor:cols[i],borderWidth:2.5,pointRadius:0}));
+  S.forEach((s,i)=>{if(isFinite(H[i]))ds9.push({label:"_v"+i,data:[{x:E.fwhm,y:H[i]}],borderColor:cols[i],backgroundColor:cols[i],pointRadius:6,showLine:false});});
+  const o9=chartOpts("seeing FWHM (″)","tempo per SNR obiettivo",true); o9.scales.x.min=1;o9.scales.x.max=5;
+  o9.scales.x.ticks.callback=v=>`${it(v)}″`;
+  o9.plugins.tooltip.callbacks={title:x=>`seeing ${it(x[0].parsed.x)}″`,label:x=>`${x.dataset.label.split(":")[0]}: ${fmtH(x.parsed.y)}`};
+  ch9=draw(ch9,"c9","line",{datasets:ds9},o9);
+
+  // 10: campionamento
+  const bb=[1,2,3,4];
+  const ds10=cfgs.map((c,i)=>({type:"bar",label:`${c.id}: ${S[i].sc.short} + ${S[i].cam.short}`,backgroundColor:cols[i],borderRadius:3,
+    data:bb.map(b=>E.fwhm/(S[i].ps*b))}));
+  ds10.push({type:"line",label:"minimo: 2 px per FWHM",data:bb.map(()=>2),borderColor:css("--warn"),backgroundColor:css("--warn"),borderDash:[6,5],borderWidth:1.5,pointRadius:0});
+  ds10.push({type:"line",label:"oltre 4: sovracampionato",data:bb.map(()=>4),borderColor:colT,backgroundColor:colT,borderDash:[2,4],borderWidth:1.5,pointRadius:0});
+  const o10=barOpts("pixel per FWHM",false,false);
+  o10.scales.y.ticks.callback=v=>it(v);
+  o10.plugins.tooltip.callbacks={title:x=>`binning ${x[0].label}`,label:x=>{const i=x.datasetIndex;
+    return i<2?`${cfgs[i].id}: ${it(x.parsed.y)} px · ${it(S[i].ps*bb[x.dataIndex],2)}″/px`:x.dataset.label;}};
+  ch10=draw(ch10,"c10","bar",{labels:bb.map(b=>`${b}×${b}`),datasets:ds10},o10);
+
+  // 6: temperatura
+  const temps=[];for(let T=-25;T<=30;T+=1)temps.push(T);
+  const ds6=cfgs.map((c,i)=>({label:`${c.id}: ${nameOf(S[i])}`,
+    data:temps.map(T=>{const s=system(c,null,T);return {x:T,y:fin(hoursTo(s,fluxes(s,E),s.tsub,E))};}),
+    borderColor:cols[i],backgroundColor:cols[i],borderWidth:2.5,pointRadius:0}));
+  S.forEach((s,i)=>{if(isFinite(H[i]))ds6.push({label:"_t"+i,data:[{x:s.temp,y:H[i]}],borderColor:cols[i],backgroundColor:cols[i],pointRadius:6,showLine:false});});
+  const o6=chartOpts("temperatura sensore (°C)","tempo per SNR obiettivo",true); o6.scales.x.min=-25;o6.scales.x.max=30;
+  o6.scales.x.ticks.callback=v=>`${v}°`;
+  o6.plugins.tooltip.callbacks={title:x=>`${x[0].parsed.x} °C · buio ${it(darkAt(x[0].parsed.x),4)} e⁻/s/px`,label:x=>`${x.dataset.label.split(":")[0]}: ${fmtH(x.parsed.y)}`};
+  ch6=draw(ch6,"c6","line",{datasets:ds6},o6);
+
+  // 2: posa
+  const subs=[];for(let t=10;t<=900;t+=5)subs.push(t);
+  const ds2=S.map((s,i)=>({label:`${cfgs[i].id}: ${nameOf(s)}`,data:subs.map(t=>({x:t,y:fin(hoursTo(s,F[i],t,E))})),
+    borderColor:cols[i],backgroundColor:cols[i],borderWidth:2.5,pointRadius:0}));
+  S.forEach((s,i)=>{if(isFinite(H[i]))ds2.push({label:"_s"+i,data:[{x:s.tsub,y:H[i]}],borderColor:cols[i],backgroundColor:cols[i],pointRadius:7,showLine:false});});
+  const o2=chartOpts("posa singola (s)","tempo per SNR obiettivo"); o2.scales.x.min=10;o2.scales.x.max=900;
+  o2.scales.y.ticks.callback=v=>fmtH(v);
+  o2.plugins.tooltip.callbacks={title:x=>`posa ${x[0].parsed.x} s`,label:x=>`${x.dataset.label.split(":")[0]}: ${fmtH(x.parsed.y)}`};
+  ch2=draw(ch2,"c2","line",{datasets:ds2},o2);
+
+  // 3: binning
+  const bins=[1,2,3,4];
+  const ds3=cfgs.map((c,i)=>({label:`${c.id}: ${nameOf(S[i])}`,
+    data:bins.map(b=>{const s=system(c,b);return fin(hoursTo(s,fluxes(s,E),s.tsub,E));}),backgroundColor:cols[i],borderRadius:3}));
+  const o3=chartOpts("binning","tempo per SNR obiettivo");
+  o3.scales.x={type:"category",ticks:{color:css("--muted"),font:{family:"IBM Plex Mono",size:11}},grid:{display:false},title:{display:true,text:"binning",color:css("--muted")}};
+  o3.scales.y.ticks.callback=v=>fmtH(v);
+  o3.plugins.tooltip.callbacks={label:x=>`${x.dataset.label.split(":")[0]}: ${fmtH(x.parsed.y)}`};
+  ch3=draw(ch3,"c3","bar",{labels:bins.map(b=>`${b}×${b}`),datasets:ds3},o3);
+}
+document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",()=>{
+  if(["objType","mag","mu","ha","o3","s2"].includes(el.id))$("presets").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
+  if(el.id.startsWith("cam"))return; // gestito dal change, che aggiorna prima i filtri
+  update();}));
+$("objType").value="ext";$("mu").value=PRESETS.find(p=>p.k==="m33").mu;
+$("presets").querySelector('[data-k="m33"]').setAttribute("aria-pressed","true");
+buildFilterTable();
+/* aperto dal pianificatore delle serate della mappa: #nome=…&mu=…&illum=…&moonAlt=…&sep=…&objAlt=…&sqm=…&target=…&oh=…&good=…&filA=…&filB=… */
+(function(){const P=new URLSearchParams(location.hash.slice(1));if(!P.size)return;
+  const n=(k,a,b)=>{const v=parseFloat(String(P.get(k)||'').replace(',','.'));return isFinite(v)?Math.min(b,Math.max(a,v)):null};
+  const set=(id,v)=>{if(v!=null)$(id).value=v};
+  const mu=n('mu',10,30);if(mu!=null){$("objType").value="ext";$("mu").value=mu;$("presets").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"))}
+  set("illum",n('illum',0,100)!=null?Math.round(n('illum',0,100)/5)*5:null);set("moonAlt",n('moonAlt',-90,90));set("sep",n('sep',10,180));set("objAlt",n('objAlt',10,90));
+  set("sqm",n('sqm',16,23));set("target",n('target',2,200));set("oh",n('oh',0,120));set("good",n('good',5,100));
+  const fA=P.get('filA'),fB=P.get('filB');if(fA&&FILTERS.mono[fA])$("filA").value=fA;if(fB&&FILTERS.osc[fB])$("filB").value=fB;
+  const nome=String(P.get('nome')||'').replace(/[<>&"]/g,'').slice(0,40);
+  if(nome){$("daMappa").hidden=false;$("daMappa").textContent=`Dati presi dal pianificatore delle serate: ${nome}, con la Luna, il cielo e l'altezza di quella notte. Le parti esterne dell'oggetto sono già incluse nella brillanza.`}})();
+update();
+</script>
+
+</body></html>
