@@ -1,0 +1,68 @@
+# Controllo automatico delle serate salvate dalla mappa.
+# Gira a ogni modifica: toglie i file che non sono serate valide (formato, dimensione, campi, numeri).
+# Il token della mappa non può modificare questo file (servirebbe il permesso "workflows").
+name: Controllo serate
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: controllo
+  cancel-in-progress: false
+jobs:
+  controllo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Togli i file non validi
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          NOME = re.compile(r'^serate/\d{4}-\d\d-\d\d_[A-Za-z0-9 .àèéìòù_-]{1,40}_[a-z0-9]{1,12}\.json$')
+          FILTRI = {'TDIG': {'L','R','G','B','Ha','OIII','SII'}, 'GSO': {'NONE','DUAL'}}
+          CHIAVI = {'tipo','versione','data','nickname','fatta','morto','scarto','sqm','snr','inizio','piano','aggiornato'}
+          def num(v, a, b):
+              return isinstance(v, (int, float)) and not isinstance(v, bool) and a <= v <= b
+          def valida(p):
+              if os.path.getsize(p) > 30000: return 'troppo grande'
+              try: f = json.load(open(p, encoding='utf-8'))
+              except Exception: return 'non è JSON'
+              if not isinstance(f, dict) or set(f) - CHIAVI: return 'campi non previsti'
+              if f.get('tipo') != 'serata' or f.get('versione') != 2: return 'tipo o versione'
+              if not re.fullmatch(r'\d{4}-\d\d-\d\d', str(f.get('data', ''))): return 'data'
+              if not isinstance(f.get('nickname'), str) or not 0 < len(f['nickname']) <= 30 or re.search(r'[<>"`]', f['nickname']): return 'nickname'
+              if not isinstance(f.get('fatta'), bool): return 'fatta'
+              if not (num(f.get('morto'), 0, 120) and num(f.get('scarto'), 0, 95) and num(f.get('sqm'), 16, 23) and num(f.get('snr', 20), 2, 200)): return 'numeri'
+              if not re.fullmatch(r'(\d\d:\d\d)?', str(f.get('inizio', ''))): return 'inizio'
+              P = f.get('piano')
+              if not isinstance(P, dict) or set(P) != {'TDIG', 'GSO'}: return 'piano'
+              for k, L in P.items():
+                  if not isinstance(L, list) or len(L) > 30: return 'piano ' + k
+                  for it in L:
+                      if not isinstance(it, dict) or set(it) - {'id','nome','mu','righe'}: return 'oggetto'
+                      if not re.fullmatch(r'[A-Za-z0-9 +_.-]{1,24}', str(it.get('id', ''))): return 'id'
+                      if not isinstance(it.get('nome'), str) or len(it['nome']) > 60 or re.search(r'[<>"`]', it['nome']): return 'nome'
+                      if not re.fullmatch(r'([0-9]{1,2}([.,][0-9]{1,2})?)?', str(it.get('mu', ''))): return 'mu'
+                      R = it.get('righe')
+                      if not isinstance(R, list) or len(R) > 30: return 'righe'
+                      for r in R:
+                          if not isinstance(r, dict) or set(r) != {'f','t','n'}: return 'riga'
+                          if r['f'] not in FILTRI[k] or not num(r['t'], 1, 3600) or not num(r['n'], 0, 5000): return 'riga'
+              return None
+          via = []
+          for radice, cartelle, file in os.walk('.'):
+              if radice.startswith('./.git'): continue
+              for n in file:
+                  p = os.path.join(radice, n)[2:]
+                  if p in ('README.md', '.github/workflows/controllo.yml'): continue
+                  motivo = 'percorso non previsto' if not NOME.match(p) else valida(p)
+                  if motivo:
+                      print('Tolgo', p, '-', motivo); via.append(p)
+          if via:
+              subprocess.run(['git', 'rm', '-q', '--'] + via, check=True)
+              subprocess.run(['git', '-c', 'user.name=controllo-serate', '-c', 'user.email=actions@github.com', 'commit', '-q', '-m', 'Controllo: tolgo file non validi'], check=True)
+              subprocess.run(['git', 'push', '-q'], check=True)
+          else:
+              print('Tutto in ordine')
+          PY
