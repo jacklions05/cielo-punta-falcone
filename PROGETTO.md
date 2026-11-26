@@ -101,6 +101,7 @@ Gli script usano Python 3 con numpy, Pillow, reportlab, playwright e healpy (sol
 - Dopo ogni modifica controlla la sintassi: estrai lo script e lancia `node --check`. Un commento `//` messo a metà riga ha già rotto tutto una volta: dentro le righe lunghe usa `/* */`.
 - Prova l'oculare con `t64.py` o `simulazioni.py` prima di pubblicare.
 - Il file deve iniziare con `<!DOCTYPE html>`.
+- **Commit:** titoli brevi e neutri (es. «Aggiornamento mappa», «Correzioni»), senza descrivere le richieste o le conversazioni e senza nomi. I dettagli di cosa è cambiato stanno in questa guida, non nei commit.
 - I nomi degli oggetti nella lista soci finiscono con `X` (Messier e facili) o `R` (RASC).
 
 
