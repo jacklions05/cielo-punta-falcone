@@ -509,7 +509,7 @@ table.sesMet td.ok{background:rgba(70,160,90,.28)} table.sesMet td.mah{backgroun
     <h3>Sequenza per strumento</h3>
     <datalist id="sesLista"></datalist>
     <div id="sesPiano" class="sesCol"></div>
-    <p class="sesNota">Servono: ore di posa utile per arrivare alla qualità voluta (SNR, di base 20; per R, G e B la metà, perché il dettaglio lo porta la luminanza L) sulle parti esterne dell'oggetto (1,5 mag/″² sotto la μ media), con il cielo e la Luna di quella notte. μ è già compilata dal catalogo: se trovi un valore migliore incollalo (va bene anche in mag/′², per esempio 14,2: lo converto io). Prima: ore utili delle serate già segnate come fatte. Le pose scartate tolgono la loro quota.</p>
+    <p class="sesNota">Servono: ore di posa utile per arrivare alla qualità voluta (SNR, di base 20; per R, G e B la metà, perché il dettaglio lo porta la luminanza L) sulle parti esterne dell'oggetto (1,5 mag/″² sotto la μ media), con il cielo e la Luna di quella notte. μ è già compilata dal catalogo: se trovi un valore migliore incollalo (va bene anche in mag/′², per esempio 14,2: lo converto io). Prima: ore utili delle serate già segnate come fatte. SNR: quello raggiunto con il totale delle ore (cresce come la radice del tempo: per raddoppiarlo servono quattro volte le ore) su quello voluto. Notti: quante notti come questa servono ancora, contando le ore in cui l'oggetto sta sopra 30° col buio e le pose scartate. Le pose scartate tolgono la loro quota.</p>
     <div class="sesRiga" style="margin-top:10px"><label class="sesCampo">Il tuo nickname<input id="sesNick" maxlength="30"></label>
       <label class="sesFattaL"><input type="checkbox" id="sesFatta"> Serata fatta: conta nelle ore</label>
       <button class="mini" id="sesSalva">Salva la serata</button><button class="mini" id="sesScarica">Scarica file</button><button class="mini" id="sesNuova">Nuova serata</button></div>
@@ -3626,8 +3626,10 @@ function sesDisegnaPiano(){const N=SES.notte;
   $('sesPiano').innerHTML=SES_K.map(k=>{const B=sesBlocchi(k),F=sesFiltriRiga(k);
     return `<div class="sesStr"><h4 style="color:${SES_COL[k]}">${SNR.STR[k].nome}</h4>`+B.map((b,i)=>{const basso=o0=>o0&&sesMinAlt(o0,b.da,b.a)<30;const it=b.it,tm=(b.da+b.a)/2,o=OGGETTI.find(x=>x.id===it.id),c=o&&N.ini?sesCieloA(o,tm):null;
       const fs=[...new Set(it.righe.flatMap(r=>sesCanali(r.f)))],sc=(+SES.opz.scarto||0)/100;
-      const riepilogo=fs.map(f=>{const st=it.righe.filter(r=>sesCanali(r.f).includes(f)).reduce((s,r)=>s+(+r.n||0)*(+r.t||0),0)*(1-sc)/3600,pr=sesFatte(k,it.id,f),sv=sesServe(k,it,f,tm),tot=pr+st,pc=isFinite(sv)&&sv>0?Math.min(100,tot/sv*100):0;
-        return `<tr><td>${sesNomeCanale(k,f)}</td><td>${sesFmtH(pr)}</td><td>${sesFmtH(st)}</td><td><b>${sesFmtH(tot)}</b></td><td>${isFinite(sv)?sesFmtH(sv):'—'}</td><td>${isFinite(sv)?(tot>=sv?'<span class="sesOk">fatto</span>':sesFmtH(sv-tot)):'—'}</td><td><span class="sesBar"><i style="width:${pc}%;background:${SES_COL[k]}"></i></span></td></tr>`}).join('');
+      const okN=o&&N.buio?N.buio.filter(x=>sesAlt([o.ra,o.dec],x.t)>=30).length/6:0;
+      const riepilogo=fs.map(f=>{const st=it.righe.filter(r=>sesCanali(r.f).includes(f)).reduce((s,r)=>s+(+r.n||0)*(+r.t||0),0)*(1-sc)/3600,pr=sesFatte(k,it.id,f),sv=sesServe(k,it,f,tm),tot=pr+st,pc=isFinite(sv)&&sv>0?Math.min(100,tot/sv*100):0,snrT=(+SES.opz.snr||20)*(/^[RGB]$/.test(f)?.5:1),snrO=isFinite(sv)&&sv>0?snrT*Math.sqrt(tot/sv):NaN,
+          notti=isFinite(sv)&&sv>tot&&okN>0?Math.ceil((sv-tot)/(okN*(1-sc))):0;
+        return `<tr><td>${sesNomeCanale(k,f)}</td><td>${sesFmtH(pr)}</td><td>${sesFmtH(st)}</td><td><b>${sesFmtH(tot)}</b></td><td>${isFinite(sv)?sesFmtH(sv):'—'}</td><td>${isFinite(sv)?(tot>=sv?'<span class="sesOk">fatto</span>':sesFmtH(sv-tot)+(notti?`<small> · ${notti===1?'1 notte':'~'+notti+' notti'}</small>`:'')):'—'}</td><td>${isFinite(snrO)?`<b class="${snrO>=snrT?'sesOk':''}">${Math.round(snrO)}</b>/${Math.round(snrT)}`:'—'}</td><td><span class="sesBar"><i style="width:${pc}%;background:${SES_COL[k]}"></i></span></td></tr>`}).join('');
       const q=encodeURIComponent(it.nome+' surface brightness');
       return `<div class="sesCard" style="border-left-color:${SES_COL[k]}">
         <div class="sesCardTop"><b>${sesEsc(it.nome)}</b><span class="sesOre">${sesOra(b.da)}–${sesOra(b.a)}</span>
@@ -3641,7 +3643,7 @@ function sesDisegnaPiano(){const N=SES.notte;
           <td>${sesFmtH((+r.n||0)*((+r.t||0)+(+SES.opz.morto||0))/3600)}</td><td><button class="mini" data-a="rvia" data-k="${k}" data-i="${i}" data-j="${j}" aria-label="Togli riga">✕</button></td></tr>`).join('')}</table>
         <div class="sesPre"><button class="mini" data-a="riga" data-k="${k}" data-i="${i}">＋ riga</button>${SES_PRESET[k].map((p,pi)=>`<button class="mini" data-a="pre" data-k="${k}" data-i="${i}" data-j="${pi}">${p[0]}</button>`).join('')}</div>
         ${basso(o)?'<p class="sesAvv">In parte di questo intervallo l\'oggetto è sotto i 30°.</p>':''}
-        ${fs.length?`<table class="sesTot"><tr><th>Filtro</th><th>Prima</th><th>Stasera</th><th>Totale</th><th>Servono</th><th>Mancano</th><th></th></tr>${riepilogo}</table>`:''}
+        ${fs.length?`<table class="sesTot"><tr><th>Filtro</th><th>Prima</th><th>Stasera</th><th>Totale</th><th>Servono</th><th>Mancano</th><th>SNR</th><th></th></tr>${riepilogo}</table>`:''}
       </div>`}).join('')+
       `<div class="sesAdd2"><input list="sesLista" placeholder="Aggiungi un oggetto: M33, NGC 7331…" data-add="${k}"><button class="mini" data-a="add" data-k="${k}">＋ aggiungi</button></div>
       <div class="sesSugg">${sesSuggeriti(k)}</div></div>`}).join('');
