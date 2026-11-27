@@ -1,4 +1,4 @@
-# Controllo automatico delle serate salvate dalla mappa.
+# Controllo automatico delle serate salvate dalla mappa e dalla pagina Astro.
 # Gira a ogni modifica: toglie i file che non sono serate valide (formato, dimensione, campi, numeri).
 # Il token della mappa non può modificare questo file (servirebbe il permesso "workflows").
 name: Controllo serate
@@ -40,7 +40,12 @@ jobs:
               for k, L in P.items():
                   if not isinstance(L, list) or len(L) > 30: return 'piano ' + k
                   for it in L:
-                      if not isinstance(it, dict) or set(it) - {'id','nome','mu','righe'}: return 'oggetto'
+                      if not isinstance(it, dict) or set(it) - {'id','nome','mu','righe','ora','ra','de','t','m','A','B','mu0'}: return 'oggetto'
+                      if not re.fullmatch(r'(\d\d:\d\d)?', str(it.get('ora', ''))): return 'ora'
+                      if 'ra' in it and not (num(it['ra'], 0, 360) and num(it.get('de'), -90, 90)): return 'coordinate'
+                      if 't' in it and it['t'] not in {'G','GGrp','GCl','OCl','PN','HII','Neb','RfN','SNR','ClN','DrkN','Ast','Oth'}: return 'tipo oggetto'
+                      for c in ('m', 'A', 'B', 'mu0'):
+                          if c in it and not num(it[c], -30, 600): return 'numeri oggetto'
                       if not re.fullmatch(r'[A-Za-z0-9 +_.-]{1,24}', str(it.get('id', ''))): return 'id'
                       if not isinstance(it.get('nome'), str) or len(it['nome']) > 60 or re.search(r'[<>"`]', it['nome']): return 'nome'
                       if not re.fullmatch(r'([0-9]{1,2}([.,][0-9]{1,2})?)?', str(it.get('mu', ''))): return 'mu'

@@ -3766,7 +3766,11 @@ function snrApri(k,b){let h='';if(b&&b.it){const it=b.it,o=OGGETTI.find(x=>x.id=
   $('snrFrame').src='snr.html'+h;$('snrBox').hidden=false;conta('serata/snr','Apre il calcolatore SNR')}
 $('snrChiudi').onclick=()=>{$('snrBox').hidden=true};
 /* ---------- interfaccia ---------- */
-function sesApri(on){$('ses').hidden=!on;if(!on)return;if(menu)chiudiMenu();conta('serata/apre','Apre «Pianifica una serata»');
+/* la pianificazione delle riprese ora è una pagina a sé (astro.html), in una nuova scheda; questa finestra resta come riserva */
+function sesApri(on){if(on&&!sesApri.vecchia){conta('serata/apre','Apre la pagina Astro');const w=window.open('astro.html','astro');if(!w){let a=$('astroLink');if(!a){a=document.createElement('a');a.id='astroLink';a.href='astro.html';a.target='astro';a.rel='noopener';
+    a.textContent='Apri la pagina Astro ↗';a.style.cssText='position:fixed;z-index:90;left:50%;top:84px;transform:translateX(-50%);background:#2a2216;border:1px solid #7a5422;color:#f3d9a8;border-radius:12px;padding:.7rem 1.1rem;font:600 .95rem system-ui;text-decoration:none';
+    a.onclick=()=>setTimeout(()=>a.remove(),100);document.body.appendChild(a);setTimeout(()=>a&&a.remove(),9000)}}return}
+  $('ses').hidden=!on;if(!on)return;if(menu)chiudiMenu();conta('serata/apre','Apre «Pianifica una serata»');
   if(!SES.data){const p=romeParts(Date.now()),g=p.hour<9?new Date(Date.UTC(p.year,p.month-1,p.day)-864e5):new Date(Date.UTC(p.year,p.month-1,p.day));SES.data=g.toISOString().slice(0,10)}
   $('sesData').value=SES.data;$('sesNick').value=SES.nick||'';$('sesMorto').value=SES.opz.morto;$('sesScarto').value=SES.opz.scarto;$('sesSqm').value=SES.opz.sqm;$('sesSnr').value=SES.opz.snr;$('sesInizio').value=SES.opz.inizio||'';
   if(!$('sesLista').options.length)$('sesLista').innerHTML=OGGETTI.filter(o=>o.kind==='dso').map(o=>`<option value="${sesEsc(o.nome)}">`).join('');
@@ -3827,6 +3831,6 @@ $('sesData').onchange=e=>{SES.data=e.target.value;SES.file=null;SES.fatta=false;
 $('sesFatta').onchange=e=>{SES.fatta=e.target.checked};
 $('sesSnr1').onclick=()=>snrApri();$('sesSalva').onclick=sesSalva;$('sesScarica').onclick=sesScarica;$('sesNuova').onclick=sesNuova;
 
-if(location.hash==='#serata')setTimeout(()=>sesApri(true),600);
+if(location.hash==='#serata')location.replace('astro.html#seq');
 
 </script>
