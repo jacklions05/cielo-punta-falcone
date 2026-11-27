@@ -430,6 +430,7 @@ table.sesMet td.ok{background:rgba(70,160,90,.28)} table.sesMet td.mah{backgroun
     <label><input type="checkbox" id="quiete"> Quiete · solo cielo, niente effetti</label>
     <label><input type="checkbox" id="ly-grid"> Griglia alt-az</label>
     <label><input type="checkbox" id="ly-cerchi" checked> Equatore ed eclittica</label>
+    <label><input type="checkbox" id="ly-nomi" checked> Nomi degli oggetti</label>
     <label><input type="checkbox" id="ly-colSito"> Colori per sito (storico / attuale)</label>
     <hr>
     <div class="leg" id="legenda"></div>
@@ -1526,7 +1527,7 @@ function efem(k,t){const E=EFEM[k];if(!E||t<E[0][0]||t>E[E.length-1][0])return n
 function posOf(o,t){if(o.kind==="cometa"||o.kind==="asteroide")return efem(o.id,t);if(o.kind==="evento"||o.kind==="paesaggio")return null;if(o.kind==="luna")return moonRaDec(t);if(o.kind==="sole")return sunRaDec(t);if(o.kind==="pianeta")return planetRaDec(o.id,t);return [o.ra,o.dec]}
 function vecOf(o){if(!o._rd)return [0,0,-1];const v=eq(o._rd[0],o._rd[1]);if(o.kind!=="luna")return v;const [az,al]=altaz(v);return hor(az,al-.95*Math.cos(al*D2R))} // parallasse lunare
 /* livelli */
-const LAY={deep:true,stelle:true,pianeti:true,luna:true,sole:true,eclLuna:true,eclSole:true,comete:true,paes:true,cerchi:true,colSito:false,sorprese:!matchMedia('(prefers-reduced-motion: reduce)').matches};
+const LAY={deep:true,stelle:true,pianeti:true,luna:true,sole:true,eclLuna:true,eclSole:true,comete:true,paes:true,cerchi:true,nomi:true,colSito:false,sorprese:!matchMedia('(prefers-reduced-motion: reduce)').matches};
 try{const s=JSON.parse(localStorage.getItem('pf-livelli')||'{}');for(const k in LAY)if(typeof s[k]==='boolean')LAY[k]=s[k]}catch(e){}
 const eclOn=e=>e.corpo==='LUNA'?LAY.eclLuna:LAY.eclSole;
 const acceso=o=>o.kind==="paesaggio"?LAY.paes:LAY[LIVELLO[o.kind]];
@@ -1847,14 +1848,16 @@ function drawObjects(zf){
   const oggi=isoDay(), recent=new Date(Date.parse(oggi)-45*864e5).toISOString().slice(0,10);
   const SUN=OGGETTI.find(o=>o.kind==='sole')||{kind:'sole'}; SUN._rd=SUN._rd||sunRaDec(tNow()); const vs=eq(SUN._rd[0],SUN._rd[1]);
   const boxes=[];
-  const lab=(o,p,r,col)=>{const n=o.foto.filter(fin).length,fs=Math.round(Math.max(12,Math.min(15,12*zf)));ctx.font=`${o.kind==='dso'||o.kind==='pianeta'?700:400} ${fs}px ${fUI}`;ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillStyle=col;
+  const lab=(o,p,r,col)=>{if(!LAY.nomi)return;const n=o.foto.filter(fin).length,fs=Math.round(Math.max(12,Math.min(15,12*zf)));ctx.font=`${o.kind==='dso'||o.kind==='pianeta'?700:400} ${fs}px ${fUI}`;ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillStyle=col;
     const s=o.nome+(n>1?'  ×'+n:''),w=ctx.measureText(s).width,x=p[0]+r+9;let y=p[1];
     for(let k=0;k<6&&boxes.some(b=>x<b[2]&&x+w>b[0]&&Math.abs(y-b[1])<fs+2);k++)y+=fs+3;
     boxes.push([x,y,x+w]);if(y!==p[1]){ctx.strokeStyle=col;ctx.globalAlpha=.4;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p[0]+r+3,p[1]+3);ctx.lineTo(x-3,y);ctx.stroke();ctx.globalAlpha=1}ctx.fillText(s,x,y)};
   if(state.dafare){ctx.save();ctx.font=`400 ${Math.round(Math.max(11,Math.min(13,11*zf)))}px ${fUI}`;ctx.textBaseline='middle';ctx.textAlign='left';
     for(const o of OGGETTI){if(!o.dafare)continue;const v=vecOf(o);if(v[2]<-.005)continue;const p=proj(v);if(!p)continue;const r=Math.max(6,Math.min(11,7*zf)),sel=state.sel===o.id;
-      ctx.setLineDash([3,3]);ctx.strokeStyle=sel?'#fff':'rgba(205,205,205,.6)';ctx.lineWidth=sel?1.8:1.2;ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.stroke();ctx.setLineDash([]);
-      ctx.fillStyle='rgba(205,205,205,.65)';ctx.fillText(o.nome,p[0]+r+4,p[1]);hits.push([p[0],p[1],r+10,o])}ctx.restore()}
+      /* stesso simbolo degli oggetti fotografati (per tipo), ma grigio: si capisce cos'è senza confonderli */
+      ctx.strokeStyle=sel?'#fff':'rgba(205,205,205,.62)';ctx.lineWidth=sel?1.8:1.2;forma(ctx,o.fam,p[0],p[1],r);ctx.setLineDash([]);
+      if(sel){ctx.globalAlpha=.7;ctx.beginPath();ctx.arc(p[0],p[1],r*1.45+5,0,7);ctx.stroke();ctx.globalAlpha=1}
+      if(LAY.nomi){ctx.fillStyle='rgba(205,205,205,.65)';ctx.fillText(o.nome,p[0]+r*1.35+4,p[1])}hits.push([p[0],p[1],r+10,o])}ctx.restore()}
   // i corpi mobili per ultimi, così stanno sopra agli anelli
   for(const o of ORD){ if(o.kind==='paesaggio'||!visibile(o))continue; const v=vecOf(o); if(v[2]<-.005)continue; const p=proj(v); if(!p)continue;
     const sel=state.sel===o.id;
