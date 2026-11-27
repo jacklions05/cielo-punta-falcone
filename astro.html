@@ -77,6 +77,23 @@ h3{font-size:1rem;margin:.8rem 0 .4rem}
 .prj{border-collapse:collapse;width:100%;font-size:.93rem}.prj td,.prj th{padding:.35rem .45rem;border-bottom:1px solid #222;text-align:left}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem}
 .form label{display:flex;flex-direction:column;gap:.2rem;font-size:.88rem;color:var(--muted)}
+/* difficoltà */
+.dif{display:inline-block;font-size:.75rem;font-weight:600;border-radius:6px;padding:.05rem .4rem;margin-left:.3rem;white-space:nowrap}
+.d1{background:#1f3d27;color:#8fe0a0}.d2{background:#3d3418;color:#f0d27a}.d3{background:#45231d;color:#f39a88}.d4{background:#2a2a2e;color:#9a9890}
+#consigli{margin-bottom:1rem}
+#consigli .col{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.8rem}
+#consigli .box{background:var(--pan2);border:1px solid var(--rule);border-radius:12px;padding:.7rem .8rem}
+#consigli .box h3{margin:0 0 .4rem;font-size:.95rem}
+#consigli button.og{display:flex;justify-content:space-between;width:100%;text-align:left;margin:.25rem 0;padding:.35rem .6rem;gap:.5rem}
+#consigli button.og small{white-space:nowrap}
+.seg{display:flex;flex-wrap:wrap;gap:.3rem}.seg button{border-radius:999px;padding:.3rem .8rem}.seg button[aria-pressed=true]{background:#3a2a14;border-color:#a06b2a}
+/* guida */
+#guida{position:fixed;inset:0;z-index:20;pointer-events:none}
+#guida .buco{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.72);border:2px solid var(--acc);transition:all .25s;pointer-events:none}
+#guida .fumetto{position:fixed;max-width:min(420px,calc(100vw - 24px));background:#1d1a15;border:1px solid #a06b2a;border-radius:14px;padding:1rem 1.1rem;pointer-events:auto;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+#guida .fumetto h3{margin:0 0 .4rem;font-size:1.05rem}
+#guida .fumetto p{margin:.2rem 0 .7rem;font-size:.95rem;line-height:1.45}
+#guida .fumetto .riga{justify-content:space-between}
 #toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#2a2216;border:1px solid #7a5422;border-radius:10px;padding:.6rem 1rem;display:none;z-index:9}
 @media (max-width:1350px){#atl{grid-template-columns:240px minmax(0,1fr)}#det{position:fixed;top:0;right:0;bottom:0;width:min(500px,100%);max-height:none;z-index:8;border-radius:0;transform:translateX(105%);transition:transform .2s;box-shadow:-10px 0 30px rgba(0,0,0,.6)}#det.aperto{transform:none}}
 #detX{display:none}@media (max-width:1350px){#detX{display:inline-block}}
@@ -87,6 +104,7 @@ h3{font-size:1rem;margin:.8rem 0 .4rem}
   <h1>Astro · Punta Falcone</h1>
   <div class="data"><button id="dPrima" title="Notte prima">◀</button><input type="date" id="data"><button id="dDopo" title="Notte dopo">▶</button><button id="dOggi">Stanotte</button></div>
   <div id="notte"></div>
+  <button id="bGuida" title="Guida passo passo">? Guida</button>
   <a href="./" title="Torna alla mappa del cielo">← Mappa</a>
 </header>
 <nav role="tablist">
@@ -119,6 +137,12 @@ h3{font-size:1rem;margin:.8rem 0 .4rem}
 
 <!-- ============ ATLANTE ============ -->
 <section id="s-atlante" hidden>
+  <div class="card" id="consigli">
+    <div class="riga" style="justify-content:space-between"><h2 style="margin:0">Cosa fotografo stanotte?</h2>
+      <div class="seg" id="segStr"><button data-s="TDIG" aria-pressed="true">TDIG</button><button data-s="GSO" aria-pressed="false">GSO</button></div></div>
+    <p class="nota">Oggetti alti stanotte (almeno 3 ore sopra 30°) che entrano nel campo, divisi per difficoltà con lo strumento scelto. Toccane uno per la scheda.</p>
+    <div class="col" id="consCol"></div>
+  </div>
   <div id="atl">
     <div class="card" id="filtri">
       <h3>Cataloghi</h3>
@@ -130,6 +154,9 @@ h3{font-size:1rem;margin:.8rem 0 .4rem}
       <label><input type="checkbox" data-li="miei" checked> Oggetti miei</label>
       <h3>Tipo</h3>
       <select id="fTipo"><option value="">tutti</option><option value="G">galassie</option><option value="GGrp">gruppi di galassie</option><option value="GCl">ammassi globulari</option><option value="OCl">ammassi aperti</option><option value="PN">nebulose planetarie</option><option value="NEB">nebulose a emissione e resti di supernova</option><option value="RfN">nebulose a riflessione</option></select>
+      <h3>Difficoltà</h3>
+      <select id="fDif"><option value="">tutte</option><option value="1">facili</option><option value="2">intermedi</option><option value="3">difficili</option><option value="4">fuori portata</option><option value="5">più grandi del campo</option></select>
+      <label>per il <select id="fDifS" style="width:auto"><option>TDIG</option><option>GSO</option></select></label>
       <h3>Stanotte</h3>
       <label>almeno <input type="number" id="fOre" min="0" max="12" step="0.5" value="1" style="width:4.5rem"> h sopra 30°</label>
       <label><input type="checkbox" id="fCampo"> entra nel campo del TDIG</label>
@@ -207,6 +234,7 @@ h3{font-size:1rem;margin:.8rem 0 .4rem}
       <li><b>Ammassi aperti:</b> qui non conta la superficie ma le stelle: si punta alle stelle deboli dell'ammasso, magnitudine V totale + 12 (tra 15 e 19), con lo stesso SNR.</li>
     </ul>
     <p><b>Foto buona.</b> Si chiede l'SNR scelto (di base 20) su un'area di 2″×2″ delle parti deboli: μ + 1,5 per galassie, gruppi e nebulose, + 2,5 per le planetarie (gli aloni esterni), + 5 per i globulari (l'alone esterno, verso 4 raggi di metà luce). In R, G e B basta metà SNR. Con i filtri stretti le nebulose a emissione sono stimate in rayleigh (Hα, OIII e SII in proporzione al tipo).</p>
+    <p><b>Difficoltà.</b> Per ogni strumento: ore per una foto buona (SNR 20) in una notte senza Luna. <b>Facile</b> fino a 2 h (una serata), <b>intermedio</b> fino a 8 h (2–4 serate), <b>difficile</b> fino a 30 h (un progetto lungo), oltre <b>fuori portata</b>. Se l'oggetto è più grande del campo è segnato a parte: servirebbe un mosaico, oppure si fotografa solo una parte. Lo stesso oggetto può essere facile per il TDIG e difficile per il GSO.</p>
     <p><b>Ore utili.</b> Ore di buio astronomico con l'oggetto sopra 30°. Il tempo di orologio comprende 4 s tra una posa e l'altra e il 25% di pose perse, con un minimo di 5 pose da 30 s (per gli oggetti brillanti conviene comunque farne almeno 20–30, per togliere satelliti e pixel caldi); nella sequenza contano i valori che scegli tu.</p>
     <p class="nota">Sono stime: servono a confrontare oggetti e strumenti e a non sottovalutare gli oggetti deboli. Se trovi una μ migliore per un oggetto, scrivila nella sua scheda: viene usata al posto della mia.</p>
   </div>
@@ -359,17 +387,35 @@ function disegnaNotte(){const N=ST.notte,mid=N.buio[Math.floor(N.buio.length/2)]
   $('lunaGraf').innerHTML=graficoAlt([{v:curvaLuna(),col:'#d9d6c8',nome:'Luna '+Math.round(mid.illum*100)+'%',dash:'6 4'},{v:N.T.map(x=>x.sole),col:'#e9b44c',nome:'Sole'}],{h:240})+
     '<p class="nota">Fasce: giorno, crepuscolo civile, nautico, astronomico; il buio astronomico è lo sfondo nero. La linea tratteggiata arancione è a 30°.</p>'}
 
+/* difficoltà: ore per una foto buona (SNR 20) con quello strumento, in una notte senza Luna, con l'oggetto a 60°.
+   Facile fino a 2 h (una serata), intermedio fino a 8 h (2–4 serate), difficile fino a 30 h, oltre è fuori portata */
+const DIF_NOME=['','facile','intermedio','difficile','fuori portata','più grande del campo'];
+function difficolta(o,k){const sky=+ST.opz.sqm||20.15,snr=20,f=princ(o,k);let h;
+  const one=c=>{const op={T:snr};if((o.t==='OCl'||(o.t==='ClN'&&muDi(o)==null))&&o.ms!=null)return SNR.ore(k,c,{star:o.ms},sky,op);const mu=muDi(o);if(mu==null)return NaN;const m=mu+(OFF[o.t]??1.5);
+    if(/^(Ha|OIII|SII|DHA|DOIII)$/.test(c)){const R=1e4*90*10**(-.4*m)/1.87e-6/.6;return SNR.ore(k,c,{ha:R*.5,o3:R*(o.t==='PN'?.6:.25),s2:R*.15},sky,op)}return SNR.ore(k,c,{mu:m},sky,op)};
+  h=f==='DUAL'?Math.max(one('DHA'),one('DOIII')):one(f);if(!isFinite(h))return {d:0,h};
+  const fov=SNR.fov(k);if(o.A&&o.A>fov[0]*1.05)return {d:5,h,campo:true};
+  return {d:h<=2?1:h<=8?2:h<=30?3:4,h}}
+const difTag=x=>x&&x.d?`<span class="dif d${Math.min(4,x.d)}" title="${x.campo?'più grande del campo':'circa '+fmtH(x.h)+' con cielo buio'}">${DIF_NOME[x.d]}</span>`:'';
+let CONS_K='TDIG';
+function disegnaConsigli(){const k=CONS_K,R={1:[],2:[],3:[]};
+  for(const o of CAT){const V=VIS.get(o.id);if(!V||V.ore<3)continue;const D=V['dif'+k];if(!D||!D.d||D.d>3)continue;R[D.d].push([o,V])}
+  for(const d in R)R[d].sort((a,b)=>(b[1].ore-a[1].ore)||((a[1]['dif'+k].h)-(b[1]['dif'+k].h)));
+  const tit={1:'Facili · una serata',2:'Intermedi · 2–4 serate',3:'Difficili · un progetto lungo'};
+  $('consCol').innerHTML=[1,2,3].map(d=>`<div class="box"><h3><span class="dif d${d}">${DIF_NOME[d]}</span> ${tit[d].split('·')[1]}</h3>${R[d].length?R[d].slice(0,6).map(([o,V])=>`<button class="og" data-id="${esc(o.id)}"><span><b>${esc(o.n)}</b> <small>${TIPO_NOME[o.t]||''}</small></span><small>${fmtH(V['dif'+k].h)} · ↑${V.cul?ora(V.cul.t):''}</small></button>`).join(''):'<p class="nota">Nessuno adatto stanotte.</p>'}</div>`).join('');
+  $('consCol').querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>dettaglio(b.dataset.id))}
+document.querySelectorAll('#segStr [data-s]').forEach(b=>b.onclick=()=>{CONS_K=b.dataset.s;document.querySelectorAll('#segStr [data-s]').forEach(x=>x.setAttribute('aria-pressed',x===b));disegnaConsigli()});
 /* ---------- atlante ---------- */
 const VIS=new Map();
-function aggiornaVis(){VIS.clear();for(const o of CAT){const v=visibilita(o);const t=v.cul&&v.cul.t;v.tdig=serveP(o,'TDIG',t);v.gso=serveP(o,'GSO',t);VIS.set(o.id,v)}}
+function aggiornaVis(){VIS.clear();for(const o of CAT){const v=visibilita(o);const t=v.cul&&v.cul.t;v.tdig=serveP(o,'TDIG',t);v.gso=serveP(o,'GSO',t);v.difTDIG=difficolta(o,'TDIG');v.difGSO=difficolta(o,'GSO');VIS.set(o.id,v)}}
 function filtraTipo(o,t){if(!t)return true;if(t==='NEB')return /^(HII|Neb|SNR|ClN)$/.test(o.t);return o.t===t}
 function disegnaAtlante(){const li=new Set([...document.querySelectorAll('#filtri [data-li]')].filter(x=>x.checked).map(x=>x.dataset.li));
-  const tp=$('fTipo').value,oreMin=+$('fOre').value||0,q=$('fTesto').value.trim().toLowerCase(),campo=$('fCampo').checked,fovT=SNR.fov('TDIG');
-  let L=CAT.filter(o=>o.li.some(x=>li.has(x))&&filtraTipo(o,tp)&&(VIS.get(o.id).ore>=oreMin)&&(!q||(o.n+' '+o.al).toLowerCase().includes(q))&&(!campo||!o.A||o.A<=fovT[0]));
+  const fd=+$('fDif').value||0,fds=$('fDifS').value,tp=$('fTipo').value,oreMin=+$('fOre').value||0,q=$('fTesto').value.trim().toLowerCase(),campo=$('fCampo').checked,fovT=SNR.fov('TDIG');
+  let L=CAT.filter(o=>o.li.some(x=>li.has(x))&&filtraTipo(o,tp)&&(VIS.get(o.id).ore>=oreMin)&&(!q||(o.n+' '+o.al).toLowerCase().includes(q))&&(!campo||!o.A||o.A<=fovT[0])&&(!fd||(VIS.get(o.id)['dif'+fds]||{}).d===fd));
   const v=o=>VIS.get(o.id),ord=$('fOrd').value,num=x=>isFinite(x)?x:1e9;
   const F={ore:(a,b)=>v(b).ore-v(a).ore,tdig:(a,b)=>num(v(a).tdig)-num(v(b).tdig),gso:(a,b)=>num(v(a).gso)-num(v(b).gso),mu:(a,b)=>num(muDi(a))-num(muDi(b)),m:(a,b)=>num(a.m)-num(b.m),
     cul:(a,b)=>num(v(a).cul&&v(a).cul.t)-num(v(b).cul&&v(b).cul.t),n:(a,b)=>a.n.localeCompare(b.n,'it',{numeric:true}),tipo:(a,b)=>a.t.localeCompare(b.t)};
-  L.sort(F[ord]||F.ore);$('cnt').textContent=L.length+' di '+CAT.length;
+  L.sort(F[ord]||F.ore);$('cnt').textContent=L.length+' di '+CAT.length;disegnaConsigli();
   const sp=o=>{const c=v(o).curva,N=ST.notte;if(!N.ini)return '';const i0=N.T.findIndex(x=>x.buio),i1=N.T.length-1-[...N.T].reverse().findIndex(x=>x.buio),W=90,H=26;
     const pts=c.slice(i0,i1+1).map((a,i,A)=>`${(i/(A.length-1)*W).toFixed(1)},${(H-Math.max(0,a)/90*H).toFixed(1)}`).join(' ');
     return `<svg class="spark" width="${W}" height="${H}"><line x1="0" x2="${W}" y1="${H-30/90*H}" y2="${H-30/90*H}" stroke="#5a4320" stroke-dasharray="3 3"/><polyline points="${pts}" fill="none" stroke="#cfcdc5" stroke-width="1.5"/></svg>`};
@@ -378,7 +424,7 @@ function disegnaAtlante(){const li=new Set([...document.querySelectorAll('#filtr
     <td class="n"><b>${esc(o.n)}</b><small>${esc(o.al||'')}</small></td><td><span class="tipo">${TIPO_NOME[o.t]||o.t}</span></td><td>${virg(o.m)}</td><td>${o.A?virg(o.A,o.A<10?1:0)+'′':'—'}</td>
     <td>${muDi(o)!=null?virg(muDi(o))+(o.muU!=null?'*':''):(o.ms!=null?'<small>stelle '+virg(o.ms)+'</small>':'<small class="no">manca</small>')}</td>
     <td>${sp(o)}<small>${fmtH(V.ore)}${V.cul?' · ↑'+ora(V.cul.t)+' '+Math.round(V.cul.a)+'°':''}</small></td>
-    <td class="tdig">${fmtH(V.tdig)}<small> ${princ(o,'TDIG').replace('Ha','Hα')}</small></td><td class="gso">${fmtH(V.gso)}<small> ${princ(o,'GSO')==='DUAL'?'dual':''}</small></td><td>${fh?fmtH(fh):''}</td></tr>`}).join('');}
+    <td class="tdig">${fmtH(V.tdig)}<small> ${princ(o,'TDIG').replace('Ha','Hα')}</small><br>${difTag(V.difTDIG)}</td><td class="gso">${fmtH(V.gso)}<small> ${princ(o,'GSO')==='DUAL'?'dual':''}</small><br>${difTag(V.difGSO)}</td><td>${fh?fmtH(fh):''}</td></tr>`}).join('');}
 /* SNR: rapporto segnale/rumore. Cresce come la radice del tempo: per raddoppiarlo serve 4 volte il tempo.
    Livelli: 10 si vede ma è granuloso, 20 foto buona, 30 ottima, 40 eccellente (×1, ×2,25, ×4 il tempo della buona) */
 function qualita(o,t){const lv=[[10,'appena accettabile'],[20,'buona'],[30,'ottima'],[40,'eccellente']],snr=+ST.opz.snr||20;
@@ -396,6 +442,7 @@ function dettaglio(id){ST.sel=id;const o=oggetto(id);if(!o)return;const V=VIS.ge
   $('det').classList.add('aperto');
   $('det').innerHTML=`<div class="riga" style="justify-content:space-between"><h2 style="margin:0">${esc(o.n)}</h2><span class="riga"><span class="tipo">${TIPO_NOME[o.t]||o.t}</span><button class="mini" id="detX" aria-label="Chiudi la scheda">✕</button></span></div>
     <p class="nota" style="margin-top:.2rem">${esc(o.al||'')}</p>
+    <p><span style="color:var(--tdig)">TDIG</span> ${difTag(V.difTDIG)||'—'} &nbsp; <span style="color:var(--gso)">GSO</span> ${difTag(V.difGSO)||'—'}</p>
     <p>mag ${virg(o.m)} · ${o.A?virg(o.A)+'′ × '+virg(o.B||o.A)+'′':'dimensioni ignote'} · ${muDi(o)!=null?'μ <b>'+virg(muDi(o))+'</b> mag/″²':o.ms!=null?'stelle fino a mag '+virg(o.ms):'μ da trovare'}<br>
     <small>${esc(o.met||'')}</small></p>
     <div class="riga"><label class="riga" style="font-size:.9rem">μ tua <input id="muU" type="number" step="0.1" style="width:6rem" value="${o.muU??''}" placeholder="${o.mu??''}"></label><a href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener" style="font-size:.9rem">cerca il valore</a></div>
@@ -558,13 +605,40 @@ async function caricaTutte(){const box=$('salvate');try{const r=await fetch(API+
   catch(e){box.innerHTML='<li class="nota">Elenco delle serate non raggiungibile.</li>'}}
 function scarica(){const f=fileSerata(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(f,null,2)],{type:'application/json'}));a.download=`serata_${f.data}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2e3)}
 
+/* ---------- guida passo passo: evidenzia un pezzo della pagina alla volta e spiega cosa toccare ---------- */
+const GUIDA=[
+  {t:'meteo',el:'header .data',h:'1 · Scegli la notte',p:'Parti da qui: «Stanotte» o le frecce per cambiare notte. Accanto vedi quando è buio e quanta Luna c\'è.'},
+  {t:'meteo',el:'#meteoTab',h:'2 · Guarda il meteo',p:'Ora per ora: nuvole, vento, umidità e seeing. Il verde è buono. In alto la frase «Cielo utile dalle… alle…» ti dice anche quando conviene smontare.'},
+  {t:'atlante',el:'#consigli',h:'3 · Scegli cosa fotografare',p:'Scegli lo strumento (TDIG o GSO): sotto trovi gli oggetti alti stanotte, divisi in facili (una serata), intermedi (2–4 serate) e difficili. Per cominciare prendi un facile.'},
+  {t:'atlante',el:'#filtri',h:'4 · Oppure cerca tu',p:'Filtra per catalogo (Messier, Hickson…), tipo, difficoltà e ore sopra 30°, oppure scrivi un nome. Puoi ordinare per ore utili o per tempo necessario.'},
+  {t:'atlante',el:'#tabBox',h:'5 · La tabella',p:'Per ogni oggetto: luminosità superficiale μ (più è alta, più è debole), quanto sta alto stanotte e quante ore servono per una foto buona con il TDIG e con il GSO. Tocca una riga.'},
+  {t:'atlante',el:'#det',h:'6 · La scheda dell\'oggetto',p:'Altezza nella notte e momento migliore, come entra nei due campi, quante ore servono (buona, ottima, eccellente) e per ogni filtro. In fondo: «+ alla sequenza» del TDIG o del GSO.',prima:()=>{const r=ST.sel||(document.querySelector('#tab tbody tr')||{dataset:{}}).dataset.id;if(r)dettaglio(r)}},
+  {t:'seq',el:'#tempo',h:'7 · La sequenza della serata',p:'Ogni oggetto aggiunto diventa una barra sulla notte, dietro la sua curva d\'altezza. Con più oggetti, «Distribuisci nella notte» dà a ognuno le ore in cui è più alto.'},
+  {t:'seq',el:'#piano',h:'8 · Pose e filtri',p:'Per ogni blocco scegli filtro, durata della posa e numero di pose (o uno schema pronto). La tabella sotto dice quanto hai già, quanto serve e quante notti mancano.'},
+  {t:'seq',el:'.seqTop',h:'9 · Le impostazioni',p:'Ora di inizio, tempo morto tra le pose, pose da scartare, buio del cielo e SNR voluto. Di solito vanno bene così.'},
+  {t:'seq',el:'#s-seq .card .riga',h:'10 · Salva',p:'Scrivi il tuo nickname e premi «Salva»: la serata la vedono anche gli altri soci. Dopo la serata spunta «serata fatta» e salva di nuovo: le ore entrano nei progetti.'},
+  {t:'prj',el:'#prj',h:'11 · Progetti',p:'Qui si sommano le ore di tutte le serate fatte, per oggetto, strumento e filtro, finché non arrivi all\'obiettivo. Fine della guida: la riapri con «? Guida».'}];
+let G=-1;
+function guida(i){G=i;let box=$('guida');if(i<0||i>=GUIDA.length){if(box)box.remove();try{localStorage.setItem('pf-astro-guida','1')}catch(e){}return}
+  const s=GUIDA[i];scheda(s.t);$('det').classList.remove('aperto');if(s.prima)s.prima();
+  if(!box){box=document.createElement('div');box.id='guida';box.innerHTML='<div class="buco"></div><div class="fumetto" role="dialog" aria-live="polite"></div>';document.body.appendChild(box)}
+  const el=document.querySelector(s.el);if(el)el.scrollIntoView({block:'center',behavior:'instant'});
+  requestAnimationFrame(()=>{const r=el?el.getBoundingClientRect():{left:innerWidth/2-150,top:innerHeight/2-50,width:300,height:100},b=box.querySelector('.buco'),f=box.querySelector('.fumetto'),m=6;
+    const R={l:Math.max(4,r.left-m),t:Math.max(4,r.top-m),w:Math.min(innerWidth-8,r.width+2*m),h:Math.min(innerHeight-8,r.height+2*m)};
+    Object.assign(b.style,{left:R.l+'px',top:R.t+'px',width:R.w+'px',height:R.h+'px'});
+    f.innerHTML=`<h3>${s.h}</h3><p>${s.p}</p><div class="riga"><button class="mini" data-g="esci">Esci</button><span class="riga"><small>${i+1}/${GUIDA.length}</small>${i?'<button class="mini" data-g="-1">Indietro</button>':''}<button class="pri" data-g="1">${i===GUIDA.length-1?'Fine':'Avanti'}</button></span></div>`;
+    const fw=Math.min(420,innerWidth-24),fh=f.offsetHeight||170;let x=Math.min(innerWidth-fw-12,Math.max(12,R.l)),y=R.t+R.h+12;
+    if(y+fh>innerHeight-12)y=R.t-fh-12;if(y<12)y=Math.max(12,innerHeight-fh-12);f.style.left=x+'px';f.style.top=y+'px';
+    f.querySelectorAll('[data-g]').forEach(btn=>btn.onclick=()=>btn.dataset.g==='esci'?guida(-1):guida(G+ +btn.dataset.g));f.querySelector('.pri').focus()})}
+addEventListener('keydown',e=>{if(G<0||!$('guida'))return;if(e.key==='Escape')guida(-1);if(e.key==='ArrowRight')guida(G+1);if(e.key==='ArrowLeft'&&G>0)guida(G-1)});
+addEventListener('resize',()=>{if($('guida'))guida(G)});
 /* ---------- interfaccia ---------- */
 function opzUI(){$('nick').value=ST.nick;$('fatta').checked=ST.fatta;$('oInizio').value=ST.opz.inizio||'';$('oMorto').value=ST.opz.morto;$('oScarto').value=ST.opz.scarto;$('oSqm').value=ST.opz.sqm;$('oSnr').value=ST.opz.snr}
 function scheda(t){document.querySelectorAll('nav [data-t]').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));document.querySelectorAll('main>section').forEach(s=>s.hidden=s.id!=='s-'+t);
   try{history.replaceState(null,'','#'+t)}catch(e){}if(t==='seq')ridisegnaSeq();if(t==='prj')disegnaProgetti();if(t==='miei')disegnaMiei()}
 document.querySelectorAll('nav [data-t]').forEach(b=>b.onclick=()=>scheda(b.dataset.t));
 addEventListener('keydown',e=>{if(e.key==='Escape')$('det').classList.remove('aperto')});
-['fTipo','fOre','fOrd','fCampo'].forEach(i=>$(i).onchange=disegnaAtlante);$('fTesto').oninput=disegnaAtlante;
+['fTipo','fOre','fOrd','fCampo','fDif','fDifS'].forEach(i=>$(i).onchange=disegnaAtlante);$('fTesto').oninput=disegnaAtlante;
 document.querySelectorAll('#filtri [data-li]').forEach(x=>x.onchange=disegnaAtlante);
 document.querySelectorAll('#tab th[data-o]').forEach(th=>th.onclick=()=>{$('fOrd').value=th.dataset.o==='tipo'?'n':th.dataset.o;disegnaAtlante()});
 $('tab').onclick=e=>{const tr=e.target.closest('tr[data-id]');if(tr)dettaglio(tr.dataset.id)};
@@ -580,7 +654,9 @@ $('dOggi').onclick=()=>cambiaData(stanotte());
 async function aggiorna(){ST.notte=notte(ST.data);disegnaNotte();aggiornaVis();disegnaAtlante();if(ST.sel)dettaglio(ST.sel);ridisegnaSeq();caricaTutte();
   try{await meteo();disegnaMeteo();disegnaTempo()}catch(e){$('meteoTab').innerHTML='<p class="nota">Previsioni non raggiungibili in questo momento.</p>'}}
 catalogo();opzUI();const q=new URLSearchParams(location.search);ST.data=/^\d{4}-\d\d-\d\d$/.test(q.get('data')||'')?q.get('data'):stanotte();$('data').value=ST.data;
+$('bGuida').onclick=()=>guida(0);
 aggiorna();const h=location.hash.slice(1);if(['meteo','atlante','seq','prj','miei','come'].includes(h))scheda(h);
+let primaVolta=true;try{primaVolta=!localStorage.getItem('pf-astro-guida')}catch(e){}if(primaVolta)setTimeout(()=>guida(0),900);
 </script>
 </body>
 </html>
